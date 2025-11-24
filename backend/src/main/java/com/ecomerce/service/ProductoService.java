@@ -1,0 +1,103 @@
+package com.ecomerce.service;
+
+import com.ecomerce.model.Categoria;
+import com.ecomerce.model.Producto;
+import com.ecomerce.model.Subcategoria;
+import com.ecomerce.model.Usuario;
+import com.ecomerce.repository.CategoriaRepository;
+import com.ecomerce.repository.ProductoRepository;
+import com.ecomerce.repository.SubcategoriaRepository;
+import com.ecomerce.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ProductoService {
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+
+    @Autowired
+    private SubcategoriaRepository subcategoriaRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    public Producto crearProducto(Producto producto) {
+        return productoRepository.save(producto);
+    }
+
+    public Optional<Producto> obtenerProductoPorId(Long id) {
+        return productoRepository.findById(id);
+    }
+
+    public List<Producto> obtenerTodosProductos() {
+        return productoRepository.findAll();
+    }
+
+    public List<Producto> obtenerProductosActivos() {
+        return productoRepository.findByActivo(true);
+    }
+
+    public List<Producto> obtenerProductosPorCategoria(Long categoriaId) {
+        return productoRepository.findByCategoriaId(categoriaId);
+    }
+
+    public List<Producto> obtenerProductosPorSubcategoria(Long subcategoriaId) {
+        return productoRepository.findBySubcategoriaId(subcategoriaId);
+    }
+
+    public List<Producto> obtenerProductosPorUsuario(String numeroDocumento) {
+        return productoRepository.findByUsuarioNumeroDocumento(numeroDocumento);
+    }
+
+    public Producto actualizarProducto(Long id, Producto productoActualizado) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        producto.setNombre(productoActualizado.getNombre());
+        producto.setDescripcion(productoActualizado.getDescripcion());
+        producto.setPrecio(productoActualizado.getPrecio());
+        producto.setStock(productoActualizado.getStock());
+        producto.setFechaCosecha(productoActualizado.getFechaCosecha());
+        producto.setImagenUrl(productoActualizado.getImagenUrl());
+
+        if (productoActualizado.getCategoria() != null) {
+            Categoria categoria = categoriaRepository.findById(productoActualizado.getCategoria().getId())
+                    .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+            producto.setCategoria(categoria);
+        }
+
+        if (productoActualizado.getSubcategoria() != null) {
+            Subcategoria subcategoria = subcategoriaRepository.findById(productoActualizado.getSubcategoria().getId())
+                    .orElseThrow(() -> new RuntimeException("Subcategoría no encontrada"));
+            producto.setSubcategoria(subcategoria);
+        }
+
+        return productoRepository.save(producto);
+    }
+
+    public Producto cambiarEstado(Long id, Boolean activo) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        producto.setActivo(activo);
+        return productoRepository.save(producto);
+    }
+
+    public void eliminarProducto(Long id) {
+        productoRepository.deleteById(id);
+    }
+
+    public Producto actualizarStock(Long id, Integer cantidad) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        producto.setStock(producto.getStock() + cantidad);
+        return productoRepository.save(producto);
+    }
+}
