@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 
 // Pages
 import Home from './pages/Home';
+import QuienesSomos from './pages/QuienesSomos';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
@@ -45,6 +46,7 @@ function AppContent() {
         <main className="flex-grow-1">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/quienes-somos" element={<QuienesSomos />} />
             <Route path="/productos" element={<Home />} />
             <Route path="/producto/:id" element={<ProductDetail />} />
             <Route path="/carrito" element={<Cart />} />

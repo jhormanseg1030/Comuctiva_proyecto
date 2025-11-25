@@ -129,7 +129,7 @@ const Home = () => {
     <>
       <div className="hero-section">
         <Container>
-          <h1 className="display-4 fw-bold">Bienvenido a EComerce</h1>
+          <h1 className="display-4 fw-bold">Bienvenido a Comuctiva</h1>
           <p className="lead">Encuentra los mejores productos al mejor precio</p>
         </Container>
       </div>

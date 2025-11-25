@@ -1,6 +1,6 @@
-# EComerce Frontend
+# Comuctiva Frontend
 
-Frontend moderno para la plataforma EComerce desarrollado con React 18, Vite y Bootstrap 5.
+Frontend moderno para la plataforma Comuctiva desarrollado con React 18, Vite y Bootstrap 5.
 
 ## 🚀 Tecnologías
 
@@ -188,4 +188,4 @@ Este frontend está diseñado para trabajar con el backend Spring Boot ubicado e
 
 ## 📄 Licencia
 
-Este proyecto es parte del sistema EComerce.
+Este proyecto es parte del sistema Comuctiva.

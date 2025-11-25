@@ -1,0 +1,286 @@
+/* QuienesSomos.css */
+
+.quienes-somos-page {
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+.quienes-somos-page .hero-section {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.quienes-somos-page .hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:rgba(255,255,255,0.1)"/><stop offset="100%" style="stop-color:rgba(255,255,255,0.05)"/></linearGradient></defs><circle cx="100" cy="100" r="80" fill="url(%23grad1)"/><path d="M60 80h20v40h20V80h20v60H60z" fill="rgba(255,255,255,0.1)"/><circle cx="120" cy="60" r="8" fill="rgba(255,255,255,0.15)"/><circle cx="80" cy="140" r="6" fill="rgba(255,255,255,0.15)"/></svg>') no-repeat center;
+  background-size: contain;
+  opacity: 0.3;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.content-section {
+  padding: 2rem 15px;
+  background: #f8f9fa;
+  color: #333;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1B5E20;
+  text-align: center;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.section-description {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+  color: #555;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.purpose-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 245, 232, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  padding: 2rem;
+  border-radius: 15px;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.vision-mision-card {
+  border: none;
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border-top: 3px solid #28a745;
+  height: 100%;
+}
+
+.vision-mision-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.vision-mision-card .card-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c5530;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+.vision-mision-card .card-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #666;
+}
+
+.vision-mision-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 245, 232, 0.9) 100%);
+  backdrop-filter: blur(15px);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  height: 100%;
+  text-align: center;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  position: relative;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.vision-mision-section:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+
+
+.section-subtitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1B5E20;
+  margin-bottom: 0.8rem;
+  position: relative;
+}
+
+.section-subtitle::after {
+  content: '';
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.section-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #555;
+  margin-bottom: 0;
+}
+
+.values-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 245, 232, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.values-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+.value-badge {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+  border: none;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+
+.value-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.6s;
+}
+
+.value-badge:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+.value-badge:hover::before {
+  left: 100%;
+}
+
+.problem-section,
+.justification-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 243, 224, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.justification-section {
+  border-color: rgba(23, 162, 184, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 248, 253, 0.9) 100%);
+}
+
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .section-description {
+    font-size: 0.9rem;
+  }
+  
+  .values-badges {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .value-badge {
+    width: 160px;
+    text-align: center;
+  }
+  
+  .content-section {
+    padding: 2rem 15px;
+  }
+  
+  .purpose-section,
+  .values-section,
+  .problem-section,
+  .justification-section {
+    padding: 1.5rem;
+  }
+  
+  .vision-mision-card .card-title {
+    font-size: 1.1rem;
+  }
+  
+  .vision-mision-card .card-text {
+    font-size: 0.85rem;
+  }
+}
