@@ -7,7 +7,7 @@ const Footer = () => {
       <Container>
         <div className="row">
           <div className="col-md-4 mb-3">
-            <h5>🛒 EComerce</h5>
+            <h5>🛒 COMUCTIVA</h5>
             <p className="text-muted">Tu tienda online de confianza</p>
           </div>
           <div className="col-md-4 mb-3">
@@ -20,14 +20,14 @@ const Footer = () => {
           </div>
           <div className="col-md-4 mb-3">
             <h6>Contacto</h6>
-            <p className="text-muted mb-1">📧 info@ecomerce.com</p>
+            <p className="text-muted mb-1">📧 info@comuctiva.com</p>
             <p className="text-muted mb-1">📱 +57 300 123 4567</p>
             <p className="text-muted">📍 Bogotá, Colombia</p>
           </div>
         </div>
         <hr className="bg-light" />
         <div className="text-center text-muted">
-          <small>© 2024 EComerce. Todos los derechos reservados.</small>
+          <small>© 2025 COMUCTIVA. Todos los derechos reservados.</small>
         </div>
       </Container>
     </footer>

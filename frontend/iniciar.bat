@@ -1,6 +1,6 @@
 @ECHO OFF
 ECHO ====================================
-ECHO    INICIANDO FRONTEND ECOMERCE
+ECHO    INICIANDO FRONTEND COMUCTIVA
 ECHO ====================================
 ECHO.
 
