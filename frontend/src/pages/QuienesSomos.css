@@ -2,19 +2,36 @@
 
 .quienes-somos-page {
   min-height: 100vh;
-  background: #ffffff;
+  background-image: url('../assets/images/campo-background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
 }
 
+.quienes-somos-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.65);
+  z-index: 0;
+}
+
 .quienes-somos-page .hero-section {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: linear-gradient(180deg, rgba(0, 179, 0, 0.95) 0%, rgba(0, 77, 0, 0.95) 100%);
   color: white;
   padding: 4rem 0;
   margin-bottom: 3rem;
   position: relative;
   overflow: hidden;
+  z-index: 1;
+  backdrop-filter: blur(5px);
 }
 
 .quienes-somos-page .hero-section::before {
@@ -36,8 +53,10 @@
 
 .content-section {
   padding: 2rem 15px;
-  background: #f8f9fa;
+  background: transparent;
   color: #333;
+  position: relative;
+  z-index: 1;
 }
 
 .section-title {
