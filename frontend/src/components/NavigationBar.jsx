@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Navbar, Nav, Container, Badge, NavDropdown } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import logo from '../assets/images/logo.jpeg';
 
 const NavigationBar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -17,8 +18,15 @@ const NavigationBar = () => {
   return (
     <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
       <Container>
-        <Navbar.Brand as={Link} to="/">
-          🛒 Comuctiva
+        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
+          <img 
+            src={logo} 
+            alt="Comuctiva Logo" 
+            height="40"
+            className="d-inline-block align-top me-2"
+            style={{ borderRadius: '5px' }}
+          />
+          Comuctiva
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
