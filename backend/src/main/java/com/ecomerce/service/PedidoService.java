@@ -76,14 +76,16 @@ public class PedidoService {
         // Crear detalles del pedido y actualizar stock
         for (Carrito item : itemsCarrito) {
             Producto producto = item.getProducto();
-            
+
             DetallePedido detalle = new DetallePedido();
             detalle.setPedido(pedido);
             detalle.setProducto(producto);
             detalle.setCantidad(item.getCantidad());
             detalle.setPrecioUnitario(producto.getPrecio());
             detalle.setSubtotal(producto.getPrecio().multiply(new java.math.BigDecimal(item.getCantidad())));
-            
+            // Asignar el vendedor del producto
+            detalle.setVendedor(producto.getUsuario());
+
             detallePedidoRepository.save(detalle);
 
             // Actualizar stock
