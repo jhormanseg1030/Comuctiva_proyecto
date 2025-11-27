@@ -81,7 +81,9 @@ export const updateProducto = (id, productoData) => api.put(`/productos/${id}/co
   headers: { 'Content-Type': 'multipart/form-data' }
 });
 export const deleteProducto = (id) => api.delete(`/productos/${id}`);
-export const cambiarEstadoProducto = (id, activo) => api.put(`/productos/${id}/estado?activo=${activo}`);
+export const cambiarEstadoProducto = (id, activo) => api.put(`/productos/${id}/estado?activo=${activo}`, {}, {
+  headers: { 'Accept': 'application/json' }
+});
 
 // Promociones
 export const getPromociones = () => api.get('/promociones');
