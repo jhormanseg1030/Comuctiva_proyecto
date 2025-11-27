@@ -32,7 +32,8 @@ const Home = () => {
         getProductos(),
         getCategorias()
       ]);
-      setProductos(productosRes.data);
+      // Mostrar sólo productos activos en la página de inicio
+      setProductos(productosRes.data.filter(p => p.activo));
       setCategorias(categoriasRes.data);
       setError(null);
     } catch (err) {
@@ -51,10 +52,10 @@ const Home = () => {
       setLoading(true);
       if (categoriaId === null) {
         const response = await getProductos();
-        setProductos(response.data);
+        setProductos(response.data.filter(p => p.activo));
       } else {
         const response = await getProductosByCategoria(categoriaId);
-        setProductos(response.data);
+        setProductos(response.data.filter(p => p.activo));
       }
       setError(null);
     } catch (err) {
@@ -81,7 +82,8 @@ const Home = () => {
     try {
       setLoading(true);
       const response = await buscarProductos(value);
-      setProductos(response.data);
+      // Buscar debe devolver sólo resultados activos en la vista pública
+      setProductos(response.data.filter(p => p.activo));
       setError(null);
     } catch (err) {
       setError('Error al buscar productos');

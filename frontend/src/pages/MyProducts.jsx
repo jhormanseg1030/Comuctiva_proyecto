@@ -100,8 +100,26 @@ const MyProducts = () => {
           await new Promise(res => setTimeout(res, 500));
           continue;
         }
-        // final failure: keep optimistic change but mark syncError so user can retry
-        setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+        // final failure: backend returned error (500). It's possible the server applied the change
+        // but failed while building the response. Verify actual state and sync UI.
+        try {
+          const fresh = await getProductosByUsuario(user.numeroDocumento);
+          const serverP = fresh.data.find(p => String(p.id) === String(id));
+          if (serverP) {
+            // if server shows the desired activo value, refresh whole list to stay consistent
+            if (serverP.activo === !activo) {
+              setProductos(fresh.data);
+            } else {
+              // server did not apply change: mark sync error so user can retry
+              setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+            }
+          } else {
+            setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+          }
+        } catch (innerErr) {
+          console.error('Error verificando estado en servidor tras fallo:', innerErr);
+          setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+        }
         // no alert: UI shows retry option
       }
     }
@@ -131,14 +149,38 @@ const MyProducts = () => {
       }
     } catch (err) {
       console.error('Reintento fallo:', err?.response?.status, err?.response?.data || err.message || err);
-      setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+      // Verify server state: maybe the change was applied despite the error
+      try {
+        const fresh = await getProductosByUsuario(user.numeroDocumento);
+        const serverP = fresh.data.find(p => String(p.id) === String(id));
+        if (serverP) {
+          if (serverP.activo === desiredActivo) {
+            setProductos(fresh.data);
+          } else {
+            setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+          }
+        } else {
+          setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+        }
+      } catch (innerErr) {
+        console.error('Error verificando estado en servidor tras reintento fallido:', innerErr);
+        setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+      }
     } finally {
       setLoadingIds(prev => prev.filter(i => i !== id));
     }
   };
 
   const openEditModal = (producto) => {
-    setEditProduct({ id: producto.id, precio: producto.precio, descripcion: producto.descripcion });
+    setEditProduct({
+      id: producto.id,
+      nombre: producto.nombre,
+      precio: producto.precio,
+      descripcion: producto.descripcion,
+      stock: producto.stock,
+      imagenFile: null,
+      imagenUrl: producto.imagenUrl
+    });
     setShowEditModal(true);
   };
 
@@ -152,6 +194,18 @@ const MyProducts = () => {
     if (field === 'precio') {
       const num = value === '' ? '' : parseFloat(value);
       setEditProduct(prev => ({ ...prev, precio: num }));
+    } else if (field === 'stock') {
+      const num = value === '' ? '' : parseInt(value, 10);
+      setEditProduct(prev => ({ ...prev, stock: num }));
+    } else if (field === 'imagen') {
+      // value is a File from input
+      if (value) {
+        const file = value;
+        const previewUrl = URL.createObjectURL(file);
+        setEditProduct(prev => ({ ...prev, imagenFile: file, imagenUrl: previewUrl }));
+      } else {
+        setEditProduct(prev => ({ ...prev, imagenFile: null }));
+      }
     } else {
       setEditProduct(prev => ({ ...prev, [field]: value }));
     }
@@ -161,18 +215,61 @@ const MyProducts = () => {
     if (!editProduct) return;
     setSavingEdit(true);
     try {
+      // Optimistic update: apply changes locally so user sees them immediately
+      setProductos(prev => prev.map(p => (String(p.id) === String(editProduct.id) ? {
+        ...p,
+        nombre: editProduct.nombre ?? p.nombre,
+        precio: editProduct.precio ?? p.precio,
+        descripcion: editProduct.descripcion ?? p.descripcion,
+        stock: editProduct.stock ?? p.stock,
+        imagenUrl: editProduct.imagenFile ? editProduct.imagenUrl : p.imagenUrl,
+        syncing: true,
+        syncError: false
+      } : p)));
+
       const formData = new FormData();
+      if (editProduct.nombre !== undefined && editProduct.nombre !== null) formData.append('nombre', editProduct.nombre);
       if (editProduct.descripcion !== undefined && editProduct.descripcion !== null) formData.append('descripcion', editProduct.descripcion);
       if (editProduct.precio !== undefined && editProduct.precio !== null) formData.append('precio', editProduct.precio.toString());
+      if (editProduct.stock !== undefined && editProduct.stock !== null) formData.append('stock', editProduct.stock.toString());
+      if (editProduct.imagenFile) formData.append('imagen', editProduct.imagenFile);
 
       const response = await updateProducto(editProduct.id, formData);
       const updated = response.data;
 
-      setProductos(prev => prev.map(p => (String(p.id) === String(updated.id) ? updated : p)));
+      // Replace local product with server response (authoritative)
+      if (updated && updated.id !== undefined) {
+        setProductos(prev => prev.map(p => (String(p.id) === String(updated.id) ? { ...updated, syncing: false, syncError: false } : p)));
+      } else {
+        // if backend returned no body but succeeded, reload list
+        await loadMyProducts();
+      }
       closeEditModal();
     } catch (err) {
       console.error('Error al guardar edición:', err);
-      alert('Error al guardar cambios');
+      // Intentar verificar si el cambio quedó aplicado aun cuando el servidor devolvió error
+      try {
+        const fresh = await getProductosByUsuario(user.numeroDocumento);
+        const serverP = fresh.data.find(p => String(p.id) === String(editProduct.id));
+        if (serverP && (
+          (editProduct.precio == null || Number(serverP.precio) === Number(editProduct.precio)) &&
+          (editProduct.descripcion == null || String(serverP.descripcion) === String(editProduct.descripcion)) &&
+          (editProduct.nombre == null || String(serverP.nombre) === String(editProduct.nombre)) &&
+          (editProduct.stock == null || Number(serverP.stock) === Number(editProduct.stock))
+        )) {
+          // cambio aplicado en servidor
+          setProductos(fresh.data);
+          closeEditModal();
+        } else {
+          // keep optimistic UI but mark error so user can retry
+          setProductos(prev => prev.map(p => (String(p.id) === String(editProduct.id) ? { ...p, syncing: false, syncError: true } : p)));
+          alert('Error al guardar cambios');
+        }
+      } catch (innerErr) {
+        console.error('Error verificando edición en servidor tras fallo:', innerErr);
+        setProductos(prev => prev.map(p => (String(p.id) === String(editProduct.id) ? { ...p, syncing: false, syncError: true } : p)));
+        alert('Error al guardar cambios');
+      }
     } finally {
       setSavingEdit(false);
     }
@@ -280,6 +377,15 @@ const MyProducts = () => {
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
+              <Form.Label>Nombre</Form.Label>
+              <Form.Control
+                type="text"
+                value={editProduct?.nombre ?? ''}
+                onChange={(e) => handleEditChange('nombre', e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
               <Form.Label>Precio</Form.Label>
               <Form.Control
                 type="number"
@@ -288,7 +394,17 @@ const MyProducts = () => {
                 onChange={(e) => handleEditChange('precio', e.target.value)}
               />
             </Form.Group>
-            <Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Stock</Form.Label>
+              <Form.Control
+                type="number"
+                value={editProduct?.stock ?? ''}
+                onChange={(e) => handleEditChange('stock', e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
               <Form.Label>Descripción</Form.Label>
               <Form.Control
                 as="textarea"
@@ -296,6 +412,20 @@ const MyProducts = () => {
                 value={editProduct?.descripcion ?? ''}
                 onChange={(e) => handleEditChange('descripcion', e.target.value)}
               />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Imagen</Form.Label>
+              <Form.Control
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleEditChange('imagen', e.target.files && e.target.files[0])}
+              />
+              {editProduct?.imagenUrl && (
+                <div className="mt-2 text-center">
+                  <img src={editProduct.imagenUrl} alt="preview" style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'cover' }} />
+                </div>
+              )}
             </Form.Group>
           </Form>
         </Modal.Body>
