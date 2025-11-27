@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Badge, Alert, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Badge, Alert, Spinner, Modal, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getProductosByUsuario, deleteProducto, cambiarEstadoProducto } from '../services/api';
+import { getProductosByUsuario, deleteProducto, cambiarEstadoProducto, updateProducto } from '../services/api';
 
 const MyProducts = () => {
   const { user } = useAuth();
@@ -10,6 +10,21 @@ const MyProducts = () => {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loadingIds, setLoadingIds] = useState([]); // track product ids with in-flight requests
+
+  const hasAdminRole = () => {
+    if (!user) return false;
+    const roles = user.roles || user.authorities || user.authority || [];
+    if (typeof roles === 'string') return roles === 'ADMIN' || roles === 'ROLE_ADMIN';
+    if (Array.isArray(roles)) {
+      return roles.some(r => {
+        if (typeof r === 'string') return r === 'ADMIN' || r === 'ROLE_ADMIN';
+        return r?.name === 'ADMIN' || r?.authority === 'ROLE_ADMIN' || r?.authority === 'ADMIN';
+      });
+    }
+    return false;
+  };
+  const isAdmin = hasAdminRole();
 
   useEffect(() => {
     loadMyProducts();
@@ -30,6 +45,12 @@ const MyProducts = () => {
   };
 
   const handleDelete = async (id) => {
+    // Delete option removed from UI; keep function in case it's needed for admins later
+    if (!isAdmin) {
+      alert('Solo administradores pueden eliminar productos.');
+      return;
+    }
+
     if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
 
     try {
@@ -37,16 +58,123 @@ const MyProducts = () => {
       alert('Producto eliminado exitosamente');
       loadMyProducts();
     } catch (err) {
-      alert(err.response?.data?.message || 'Error al eliminar el producto');
+      console.error('Error al eliminar producto:', err);
+      alert('Error al eliminar el producto');
     }
   };
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const toggleActivo = async (id, activo) => {
+    // prevent duplicate requests
+    if (loadingIds.includes(id)) return;
+
+    // Optimistic update: apply immediately to UI and mark syncing
+    setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, activo: !activo, syncing: true, syncError: false } : p)));
+    setLoadingIds(prev => [...prev, id]);
+
+    // Try the request, with one retry on failure. Do NOT rollback optimistic change; mark syncError if final failure.
+    let attempts = 0;
+    const maxAttempts = 2; // 1 initial + 1 retry
+    let succeeded = false;
+
+    while (attempts < maxAttempts && !succeeded) {
+      attempts += 1;
+      try {
+        const response = await cambiarEstadoProducto(id, !activo);
+        // If backend returned the updated product, merge it into local state
+        if (response?.data && response.data.id !== undefined) {
+          const updated = response.data;
+          setProductos(prev => prev.map(p => (String(p.id) === String(updated.id) ? { ...updated, syncing: false, syncError: false } : p)));
+        } else {
+          // mark syncing false if no detailed response
+          setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: false } : p)));
+        }
+        succeeded = true;
+      } catch (err) {
+        console.error(`Intento ${attempts} fallo al actualizar estado:`, err?.response?.status, err?.response?.data || err.message || err);
+        // if we have more attempts left, wait a short time then retry
+        if (attempts < maxAttempts) {
+          await new Promise(res => setTimeout(res, 500));
+          continue;
+        }
+        // final failure: keep optimistic change but mark syncError so user can retry
+        setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+        // no alert: UI shows retry option
+      }
+    }
+
+    setLoadingIds(prev => prev.filter(i => i !== id));
+  };
+
+  const retryToggle = async (id) => {
+    // This retries once when user clicks 'Reintentar'
+    if (loadingIds.includes(id)) return;
+    // find current producto and desired activo
+    const producto = productos.find(p => String(p.id) === String(id));
+    if (!producto) return;
+    const desiredActivo = !!producto.activo;
+
+    // mark syncing
+    setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: true, syncError: false } : p)));
+    setLoadingIds(prev => [...prev, id]);
+
     try {
-      await cambiarEstadoProducto(id, !activo);
-      loadMyProducts();
+      const response = await cambiarEstadoProducto(id, desiredActivo);
+      if (response?.data && response.data.id !== undefined) {
+        const updated = response.data;
+        setProductos(prev => prev.map(p => (String(p.id) === String(updated.id) ? { ...updated, syncing: false, syncError: false } : p)));
+      } else {
+        setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: false } : p)));
+      }
     } catch (err) {
-      alert('Error al actualizar el producto');
+      console.error('Reintento fallo:', err?.response?.status, err?.response?.data || err.message || err);
+      setProductos(prev => prev.map(p => (String(p.id) === String(id) ? { ...p, syncing: false, syncError: true } : p)));
+    } finally {
+      setLoadingIds(prev => prev.filter(i => i !== id));
+    }
+  };
+
+  const openEditModal = (producto) => {
+    setEditProduct({ id: producto.id, precio: producto.precio, descripcion: producto.descripcion });
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditProduct(null);
+  };
+
+  const handleEditChange = (field, value) => {
+    // ensure precio is numeric (or empty string) to keep form controlled
+    if (field === 'precio') {
+      const num = value === '' ? '' : parseFloat(value);
+      setEditProduct(prev => ({ ...prev, precio: num }));
+    } else {
+      setEditProduct(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editProduct) return;
+    setSavingEdit(true);
+    try {
+      const formData = new FormData();
+      if (editProduct.descripcion !== undefined && editProduct.descripcion !== null) formData.append('descripcion', editProduct.descripcion);
+      if (editProduct.precio !== undefined && editProduct.precio !== null) formData.append('precio', editProduct.precio.toString());
+
+      const response = await updateProducto(editProduct.id, formData);
+      const updated = response.data;
+
+      setProductos(prev => prev.map(p => (String(p.id) === String(updated.id) ? updated : p)));
+      closeEditModal();
+    } catch (err) {
+      console.error('Error al guardar edición:', err);
+      alert('Error al guardar cambios');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -103,26 +231,90 @@ const MyProducts = () => {
                   </div>
                   <div className="d-grid gap-2">
                     <Button 
+                      type="button"
                       variant={producto.activo ? 'outline-warning' : 'outline-success'}
                       size="sm"
-                      onClick={() => toggleActivo(producto.id, producto.activo)}
+                      onClick={(e) => { e.preventDefault(); toggleActivo(producto.id, producto.activo); }}
+                      disabled={loadingIds.includes(producto.id)}
                     >
-                      {producto.activo ? 'Desactivar' : 'Activar'}
+                      {loadingIds.includes(producto.id) ? (
+                        <>
+                          <Spinner animation="border" size="sm" role="status" className="me-2" />
+                          Procesando...
+                        </>
+                      ) : (
+                        producto.activo ? 'Desactivar' : 'Activar'
+                      )}
                     </Button>
-                    <Button 
-                      variant="outline-danger" 
+                    <Button
+                      type="button"
+                      variant="outline-primary"
                       size="sm"
-                      onClick={() => handleDelete(producto.id)}
+                      onClick={(e) => { e.preventDefault(); openEditModal(producto); }}
                     >
-                      Eliminar
+                      Editar
                     </Button>
                   </div>
+                  {/* Sync status / retry UI */}
+                  {producto.syncing && (
+                    <div className="mt-2 text-muted small">Sincronizando cambios...</div>
+                  )}
+                  {producto.syncError && (
+                    <div className="mt-2 d-flex align-items-center">
+                      <Badge bg="danger" className="me-2">Error de sincronización</Badge>
+                      <Button size="sm" variant="outline-danger" onClick={() => retryToggle(producto.id)}>Reintentar</Button>
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
             </Col>
           ))}
         </Row>
       )}
+
+      {/* Edit Modal */}
+      <Modal show={showEditModal} onHide={closeEditModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Editar Producto</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Precio</Form.Label>
+              <Form.Control
+                type="number"
+                step="0.01"
+                value={editProduct?.precio ?? ''}
+                onChange={(e) => handleEditChange('precio', e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Descripción</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                value={editProduct?.descripcion ?? ''}
+                onChange={(e) => handleEditChange('descripcion', e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeEditModal} disabled={savingEdit}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleSaveEdit} disabled={savingEdit}>
+            {savingEdit ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Guardando...
+              </>
+            ) : (
+              'Guardar'
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };
