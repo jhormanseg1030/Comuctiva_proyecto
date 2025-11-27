@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://192.168.0.100:8080/api'; // <-- Reemplaza por tu IP local
+const API_URL = 'http://192.168.137.73:8080/api'; // <-- Reemplaza por tu IP local
 // Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
@@ -75,12 +75,12 @@ export const subcategoryService = {
 };
 
 export const productService = {
-  getAll: () => api.get('/products'),
-  getByCategory: (categoryId: number) => api.get(`/products/category/${categoryId}`),
-  getBySubcategory: (subcategoryId: number) => api.get(`/products/subcategory/${subcategoryId}`),
-  getById: (id: number) => api.get(`/products/${id}`),
-  create: (data: any) => api.post('/products', data),
-  update: (id: number, data: any) => api.put(`/products/${id}`, data),
+  getAll: () => api.get('/productos'),
+  getByCategory: (categoryId: number) => api.get(`/productos/category/${categoryId}`),
+  getBySubcategory: (subcategoryId: number) => api.get(`/productos/subcategory/${subcategoryId}`),
+  getById: (id: number) => api.get(`/productos/${id}`),
+  create: (data: any) => api.post('/productos', data),
+  update: (id: number, data: any) => api.put(`/productos/${id}`, data),
   delete: (id: number) => api.delete(`/products/${id}`),
 };
 
