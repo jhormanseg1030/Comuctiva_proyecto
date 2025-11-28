@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator 
 import { authService } from '../services/api';
 import { loginStyles } from '../styles/LoginStyles';
 import { Colors } from '../styles/GlobalStyles';
+import ComuctivaLogo from '../components/ComuctivaLogo';
 
 export default function LoginScreen({ navigation }: any) {
   const [numeroDocumento, setNumeroDocumento] = useState('');
@@ -32,7 +33,7 @@ export default function LoginScreen({ navigation }: any) {
         setError('No se recibió el token. Verifica las credenciales o el servidor.');
         return;
       }
-      navigation.replace('Home');
+      navigation.replace('Home', { isLoggedIn: true, userDocument: numeroDocumento });
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId);
       // Muestra el mensaje exacto del backend o error de red
@@ -49,18 +50,19 @@ export default function LoginScreen({ navigation }: any) {
         contentContainerStyle={loginStyles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header con logo y título
+        {/* Header con logo y título */}
         <View style={loginStyles.headerContainer}>
-          <View style={loginStyles.logoContainer}>
-            <Text style={loginStyles.logoIcon}>🏢</Text>
+          <View style={loginStyles.logoWrapper}>
+            <ComuctivaLogo size="medium" />
           </View>
-          <Text style={loginStyles.appTitle}>Sistema de Gestión</Text>
-          <Text style={loginStyles.appSubtitle}>Administración empresarial</Text>
-        </View> */}
+          <Text style={loginStyles.appTitle}>Comuctiva</Text>
+          <Text style={loginStyles.appSubtitle}>Descubre el comercio local</Text>
+        </View>
 
         {/* Formulario de login */}
         <View style={loginStyles.formContainer}>
-          <Text style={loginStyles.formTitle}>Iniciar Sesión</Text>
+          <Text style={loginStyles.formTitle}>Bienvenido de vuelta</Text>
+          <Text style={loginStyles.formSubtitle}>Ingresa tus datos para continuar</Text>
           
           {/* Error message */}
           {error ? (
