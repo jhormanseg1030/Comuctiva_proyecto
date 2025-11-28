@@ -16,7 +16,12 @@ const NavigationBar = () => {
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" sticky="top">
+    <Navbar 
+      expand="lg" 
+      sticky="top"
+      style={{ backgroundColor: '#1a1a1a' }}
+      variant="dark"
+    >
       <Container>
         <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
           <img 
@@ -37,10 +42,17 @@ const NavigationBar = () => {
           </Nav>
           <Nav>
             {isAuthenticated() && (
-              <Nav.Link as={Link} to="/carrito" className="btn-cart position-relative">
+              <Nav.Link as={Link} to="/carrito" className="position-relative">
                 🛒 Carrito
                 {getCartCount() > 0 && (
-                  <Badge bg="danger" className="cart-badge">
+                  <Badge 
+                    style={{ 
+                      backgroundColor: '#18692bff',
+                      position: 'absolute',
+                      top: '0',
+                      right: '-10px'
+                    }}
+                  >
                     {getCartCount()}
                   </Badge>
                 )}
