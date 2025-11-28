@@ -10,12 +10,26 @@ export default function RegisterScreen({ navigation }: any) {
   const [error, setError] = useState('');
 
   const handleRegister = async () => {
-    // Aquí iría la lógica real de registro
+    if (!nombre || !email || !password) {
+      setError('Por favor completa todos los campos');
+      return;
+    }
+    
     setLoading(true);
-    setTimeout(() => {
+    setError('');
+    
+    try {
+      // Simular registro exitoso y redirigir a Home logueado
+      // En un caso real, aquí llamarías al servicio de registro
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simular delay
+      
+      // Redirigir a Home como usuario logueado
+      navigation.replace('Home', { isLoggedIn: true, userDocument: email });
+    } catch (error: any) {
+      setError('Error al registrarse. Intenta de nuevo.');
+    } finally {
       setLoading(false);
-      navigation.replace('Login');
-    }, 1500);
+    }
   };
 
   return (

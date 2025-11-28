@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image } from 'react-native';
 import { productService, categoryService } from '../services/api';
+import ComuctivaLogo from '../components/ComuctivaLogo';
 
 interface Producto {
   id: number;
@@ -15,7 +16,7 @@ interface Categoria {
   nombre: string;
 }
 
-const HomeScreen = ({ navigation }: any) => {
+const HomeScreen = ({ navigation, route }: any) => {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
@@ -23,6 +24,10 @@ const HomeScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [ordenamiento, setOrdenamiento] = useState<'reciente' | 'nombre'>('reciente');
+  
+  // Obtener parámetros de navegación para saber si está logueado
+  const isLoggedIn = route?.params?.isLoggedIn || false;
+  const userDocument = route?.params?.userDocument || '';
 
   useEffect(() => {
     handleCategoriaChange(null);
@@ -107,37 +112,85 @@ const HomeScreen = ({ navigation }: any) => {
   });
 
   const renderProducto = ({ item }: { item: Producto }) => (
-    <View style={styles.card}>
-      {item.imagenUrl ? (
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: item.imagenUrl }} style={styles.productImage} resizeMode="cover" />
-        </View>
-      ) : null}
-      <Text style={styles.productName}>{item.nombre}</Text>
-      <Text style={styles.productPrice}>${item.precio}</Text>
-      <Text style={styles.productDesc}>{item.descripcion}</Text>
+    <View style={styles.modernCard}>
+      <View style={styles.modernImageContainer}>
+        {item.imagenUrl ? (
+          <Image source={{ uri: item.imagenUrl }} style={styles.modernProductImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <Text style={styles.placeholderIcon}>📱</Text>
+          </View>
+        )}
+        <TouchableOpacity style={styles.favoriteButton}>
+          <Text style={styles.favoriteIcon}>🤍</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.modernCardContent}>
+        <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
+        <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
+        <TouchableOpacity style={styles.addToCartButton}>
+          <Text style={styles.addToCartText}>Agregar al carrito</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bienvenido a Comuctiva</Text>
-      <Text style={styles.subtitle}>Encuentra los mejores productos al mejor precio</Text>
+      <View style={styles.contentContainer}>
+        {isLoggedIn ? (
+          // Vista cuando el usuario está logueado
+          <>
+            <View style={styles.headerLoggedIn}>
+              <View style={styles.logoMiniWrapper}>
+                <ComuctivaLogo size="small" />
+              </View>
+              <View style={styles.titleContainer}>
+                <View style={styles.loggedInBrandContainer}>
+                  <Text style={[styles.title, styles.titleLoggedIn]}>COMUCTIVA</Text>
+                  <View style={styles.smallUnderline} />
+                </View>
+                <Text style={styles.subtitleLoggedIn}>¡Bienvenido de vuelta!</Text>
+              </View>
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userText}>Usuario: {userDocument}</Text>
+              <TouchableOpacity 
+                style={styles.logoutButton}
+                onPress={() => navigation.replace('Home')}
+              >
+                <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          // Vista cuando el usuario NO está logueado
+          <>
+            <View style={styles.titleWrapper}>
+              <Text style={styles.welcomeText}>Bienvenido a</Text>
+              <View style={styles.brandContainer}>
+                <Text style={[styles.title, styles.brandTitle]}>COMUCTIVA</Text>
+                <View style={styles.underline} />
+              </View>
+            </View>
+            <Text style={styles.subtitle}>Encuentra los mejores productos al mejor precio</Text>
 
-      <View style={styles.authButtonsRow}>
-        <TouchableOpacity
-          style={styles.authButton}
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.authButtonText}>Iniciar sesión</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.authButton, styles.registerButton]}
-          onPress={() => navigation.navigate('Register')}
-        >
-          <Text style={[styles.authButtonText, styles.registerButtonText]}>Registrarse</Text>
-        </TouchableOpacity>
-      </View>
+            <View style={styles.authButtonsRow}>
+              <TouchableOpacity
+                style={styles.authButton}
+                onPress={() => navigation.navigate('Login')}
+              >
+                <Text style={styles.authButtonText}>Iniciar sesión</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.authButton, styles.registerButton]}
+                onPress={() => navigation.navigate('Register')}
+              >
+                <Text style={[styles.authButtonText, styles.registerButtonText]}>Registrarse</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
       <TextInput
         style={styles.searchInput}
@@ -174,13 +227,16 @@ const HomeScreen = ({ navigation }: any) => {
       )}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#007bff" style={{ marginTop: 30 }} />
+        <ActivityIndicator size="large" color="#22c55e" style={{ marginTop: 30 }} />
       ) : productosOrdenados.length > 0 ? (
         <FlatList
           data={productosOrdenados}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderProducto}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 8 }}
+          showsVerticalScrollIndicator={false}
         />
       ) : (
         <View style={styles.emptyState}>
@@ -188,6 +244,27 @@ const HomeScreen = ({ navigation }: any) => {
           <Text>Intenta con otra búsqueda o categoría</Text>
         </View>
       )}
+      </View>
+      
+      {/* Barra de navegación inferior */}
+      <View style={styles.bottomNavigation}>
+        <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
+          <Text style={[styles.navIcon, styles.navIconActive]}>🏠</Text>
+          <Text style={[styles.navLabel, styles.navLabelActive]}>Inicio</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Text style={styles.navIcon}>❤️</Text>
+          <Text style={styles.navLabel}>Favoritos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Text style={styles.navIcon}>🛒</Text>
+          <Text style={styles.navLabel}>Carrito</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Text style={styles.navIcon}>🔍</Text>
+          <Text style={styles.navLabel}>Buscar</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -200,11 +277,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   authButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    paddingHorizontal: 22,
-    borderRadius: 8,
+    backgroundColor: '#22c55e',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
     marginHorizontal: 4,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   authButtonText: {
     color: '#fff',
@@ -213,37 +295,105 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#007bff',
+    borderWidth: 2,
+    borderColor: '#22c55e',
   },
   registerButtonText: {
-    color: '#007bff',
+    color: '#22c55e',
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8fafc',
+  },
+  contentContainer: {
+    flex: 1,
     paddingHorizontal: 16,
     paddingTop: 40,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 32,
+    fontWeight: '900',
+    marginBottom: 8,
     textAlign: 'center',
+    color: '#1e293b',
+    textShadowColor: 'rgba(34, 197, 94, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    letterSpacing: 2,
+    fontFamily: 'System',
+  },
+  titleLoggedIn: {
+    fontSize: 28,
+    fontWeight: '900',
+    marginBottom: 4,
+    textAlign: 'left',
+    color: '#22c55e',
+    textShadowColor: '#16a34a',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    fontFamily: 'System',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 16,
+    fontSize: 17,
+    color: '#64748b',
+    marginBottom: 20,
     textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+  subtitleLoggedIn: {
+    fontSize: 16,
+    color: '#16a34a',
+    marginBottom: 12,
+    textAlign: 'left',
+    fontWeight: '600',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  userInfo: {
+    backgroundColor: '#f0fdf4', // Fondo verde muy claro
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#22c55e',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  userText: {
+    fontSize: 16,
+    color: '#15803d', // Verde oscuro
+    fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: '#dc2626', // Rojo
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   searchInput: {
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
     fontSize: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   filterRow: {
     flexDirection: 'row',
@@ -252,14 +402,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   categoriaBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#eee',
+    backgroundColor: '#f1f5f9',
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   categoriaBtnActive: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#22c55e',
+    borderColor: '#16a34a',
   },
   categoriaText: {
     color: '#333',
@@ -274,7 +427,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ordenActive: {
-    color: '#007bff',
+    color: '#22c55e',
     fontWeight: 'bold',
   },
   card: {
@@ -326,6 +479,193 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  // Nuevos estilos modernos para las tarjetas
+  modernCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+    marginHorizontal: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    overflow: 'hidden',
+    flex: 1,
+    maxWidth: '45%',
+  },
+  modernImageContainer: {
+    position: 'relative',
+    height: 150,
+    backgroundColor: '#f8fafc',
+  },
+  modernProductImage: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderIcon: {
+    fontSize: 40,
+    opacity: 0.5,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favoriteIcon: {
+    fontSize: 16,
+  },
+  modernCardContent: {
+    padding: 12,
+  },
+  modernProductName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  modernProductPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#22c55e',
+    marginBottom: 8,
+  },
+  addToCartButton: {
+    backgroundColor: '#22c55e',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  addToCartText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  row: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  // Navegación inferior
+  bottomNavigation: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    paddingVertical: 8,
+    paddingBottom: 20,
+  },
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  navItemActive: {
+    backgroundColor: '#f0fdf4',
+    borderRadius: 12,
+    marginHorizontal: 4,
+  },
+  navIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+    opacity: 0.6,
+  },
+  navIconActive: {
+    opacity: 1,
+  },
+  navLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  navLabelActive: {
+    color: '#22c55e',
+    fontWeight: '600',
+  },
+  // Estilos para el logo mini en el header
+  headerLoggedIn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  logoMiniWrapper: {
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  titleContainer: {
+    flex: 1,
+  },
+  // Estilos mejorados para el título
+  titleWrapper: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 18,
+    color: '#64748b',
+    fontWeight: '500',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  brandContainer: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  brandTitle: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#22c55e',
+    letterSpacing: 4,
+    textTransform: 'uppercase',
+    textShadowColor: '#16a34a',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 6,
+    marginBottom: 4,
+  },
+  underline: {
+    width: 80,
+    height: 4,
+    backgroundColor: '#22c55e',
+    borderRadius: 2,
+    marginTop: 4,
+    shadowColor: '#16a34a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  loggedInBrandContainer: {
+    alignItems: 'flex-start',
+  },
+  smallUnderline: {
+    width: 60,
+    height: 3,
+    backgroundColor: '#22c55e',
+    borderRadius: 2,
+    marginTop: 2,
+    shadowColor: '#16a34a',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
 
