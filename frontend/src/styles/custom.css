@@ -1,0 +1,45 @@
+/* Filtro de categorías - elementos activos en verde */
+.category-filter.active,
+.category-filter.active:focus,
+.category-filter.active:hover,
+.list-group-item.active,
+.list-group-item.active:focus,
+.list-group-item.active:hover {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: #fff !important;
+}
+
+/* Botones primarios en verde */
+.btn-primary,
+.btn-primary:focus,
+.btn-primary:hover,
+.btn-primary:active {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: #fff !important;
+}
+
+.btn-primary:not(:disabled):not(.disabled):active {
+  background-color: #1e7e34 !important;
+  border-color: #1e7e34 !important;
+}
+
+/* Paginación - elementos activos en verde */
+.pagination .page-item.active .page-link,
+.pagination .page-item.active .page-link:focus,
+.pagination .page-item.active .page-link:hover {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: #fff !important;
+}
+
+.pagination .page-link {
+  color: #28a745 !important;
+}
+
+.pagination .page-link:hover {
+  background-color: #e6f7ea !important;
+  border-color: #28a745 !important;
+  color: #1e7e34 !important;
+}

@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
+// Styles
+import './styles/custom.css';
+
 // Components
 import NavigationBar from './components/NavigationBar';
 import Footer from './components/Footer';
