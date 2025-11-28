@@ -6,7 +6,9 @@ import { useAuth } from '../context/AuthContext';
 const Register = () => {
   const [formData, setFormData] = useState({
     numeroDocumento: '',
+    tipoDocumento: 'CEDULA',
     nombre: '',
+    apellido: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -42,10 +44,25 @@ const Register = () => {
       return;
     }
 
+    // Validar campos requeridos por backend
+    const required = ['numeroDocumento', 'tipoDocumento', 'nombre', 'apellido', 'email', 'telefono', 'direccion'];
+    for (const key of required) {
+      if (!formData[key] || String(formData[key]).trim() === '') {
+        setError('Por favor completa todos los campos obligatorios');
+        return;
+      }
+    }
+
     setLoading(true);
 
-    const { confirmPassword, ...registerData } = formData;
-    const result = await register(registerData);
+    // Mapear nombres al payload que espera el backend: correo en lugar de email
+    const { confirmPassword, email, ...rest } = formData;
+    const payload = {
+      ...rest,
+      correo: email
+    };
+
+    const result = await register(payload);
     
     setLoading(false);
 
@@ -73,15 +90,29 @@ const Register = () => {
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Número de Documento *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="numeroDocumento"
-                    value={formData.numeroDocumento}
-                    onChange={handleChange}
-                    placeholder="Ingresa tu número de documento"
-                    required
-                  />
+                    <Form.Label>Tipo de Documento *</Form.Label>
+                    <Form.Select
+                      name="tipoDocumento"
+                      value={formData.tipoDocumento}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="CEDULA">Cédula</option>
+                      <option value="PASAPORTE">Pasaporte</option>
+                      <option value="CEDULA_EXTRANJERIA">Cédula de Extranjería</option>
+                    </Form.Select>
+                  </Form.Group>
+
+                  <Form.Group className="mb-3">
+                    <Form.Label>Número de Documento *</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="numeroDocumento"
+                      value={formData.numeroDocumento}
+                      onChange={handleChange}
+                      placeholder="Ingresa tu número de documento"
+                      required
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -91,7 +122,19 @@ const Register = () => {
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleChange}
-                    placeholder="Ingresa tu nombre completo"
+                    placeholder="Ingresa tu nombre"
+                    required
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Apellido *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="apellido"
+                    value={formData.apellido}
+                    onChange={handleChange}
+                    placeholder="Ingresa tu apellido"
                     required
                   />
                 </Form.Group>
@@ -116,6 +159,7 @@ const Register = () => {
                     value={formData.telefono}
                     onChange={handleChange}
                     placeholder="300 123 4567"
+                    required
                   />
                 </Form.Group>
 
@@ -127,6 +171,7 @@ const Register = () => {
                     value={formData.direccion}
                     onChange={handleChange}
                     placeholder="Tu dirección"
+                    required
                   />
                 </Form.Group>
 

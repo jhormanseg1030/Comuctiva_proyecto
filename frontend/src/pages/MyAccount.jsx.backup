@@ -6,14 +6,11 @@ import { getUsuario, updateUsuario, cambiarPassword } from '../services/api';
 const MyAccount = () => {
   const { user, logout, token } = useAuth();
   const [formData, setFormData] = useState({
-    tipoDocumento: 'CEDULA',
     nombre: '',
-    apellido: '',
     email: '',
     telefono: '',
     direccion: ''
   });
-  const [passwordForUpdate, setPasswordForUpdate] = useState('');
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -37,10 +34,8 @@ const MyAccount = () => {
       const response = await getUsuario(user.numeroDocumento);
       const userData = response.data;
       setFormData({
-        tipoDocumento: userData.tipoDocumento || 'CEDULA',
         nombre: userData.nombre || '',
-        apellido: userData.apellido || '',
-        email: userData.correo || userData.email || '',
+        email: userData.email || '',
         telefono: userData.telefono || '',
         direccion: userData.direccion || ''
       });
@@ -61,8 +56,6 @@ const MyAccount = () => {
     }));
   };
 
-  const handlePasswordForUpdateChange = (e) => setPasswordForUpdate(e.target.value);
-
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordData(prev => ({
@@ -79,28 +72,9 @@ const MyAccount = () => {
       setError(null);
       setSuccess(false);
 
-      // Validar que el usuario confirme con su contraseña actual
-      if (!passwordForUpdate || passwordForUpdate.trim() === '') {
-        setError('Por favor ingresa tu contraseña actual para confirmar los cambios');
-        setSubmitting(false);
-        return;
-      }
-
-      // Construir payload en la forma que espera el backend
-      const payload = {
-        tipoDocumento: formData.tipoDocumento,
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        telefono: formData.telefono,
-        direccion: formData.direccion,
-        correo: formData.email,
-        password: passwordForUpdate
-      };
-
-      await updateUsuario(user.numeroDocumento, payload);
-
+      await updateUsuario(user.numeroDocumento, formData);
+      
       setSuccess(true);
-      setPasswordForUpdate('');
       alert('Información actualizada exitosamente');
     } catch (err) {
       setError(err.response?.data?.message || 'Error al actualizar la información');
@@ -190,30 +164,6 @@ const MyAccount = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Tipo de Documento</Form.Label>
-              <Form.Select
-                name="tipoDocumento"
-                value={formData.tipoDocumento}
-                onChange={handleChange}
-              >
-                <option value="CEDULA">Cédula</option>
-                <option value="PASAPORTE">Pasaporte</option>
-                <option value="CEDULA_EXTRANJERIA">Cédula de Extranjería</option>
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Apellido</Form.Label>
-              <Form.Control
-                type="text"
-                name="apellido"
-                value={formData.apellido}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
               <Form.Label>Nombre Completo</Form.Label>
               <Form.Control
                 type="text"
@@ -233,19 +183,6 @@ const MyAccount = () => {
                 onChange={handleChange}
                 required
               />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Confirma con tu contraseña actual *</Form.Label>
-              <Form.Control
-                type="password"
-                name="passwordForUpdate"
-                value={passwordForUpdate}
-                onChange={handlePasswordForUpdateChange}
-                placeholder="Ingresa tu contraseña actual"
-                required
-              />
-              <Form.Text className="text-muted">Se usará para confirmar los cambios, no se almacenará.</Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
