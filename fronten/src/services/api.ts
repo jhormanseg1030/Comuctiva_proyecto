@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://172.16.110.216:8080/api'; // <-- Reemplaza por tu IP local
+const API_URL = 'http://172.16.103.228:8080/api'; // <-- Reemplaza por tu IP local
 // Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
@@ -46,15 +46,21 @@ export const authService = {
   getCurrentUser: async () => {
     const userStr = await AsyncStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
+  },
+
+  register: async (data: any) => {
+    // El endpoint de registro es /auth/register
+    const response = await api.post('/auth/register', data);
+    return response.data;
   }
 };
 
 export const userService = {
-  getAll: () => api.get('/users'),
-  getById: (id: number) => api.get(`/users/${id}`),
-  create: (data: any) => api.post('/users', data),
-  update: (id: number, data: any) => api.put(`/users/${id}`, data),
-  delete: (id: number) => api.delete(`/users/${id}`),
+  getAll: () => api.get('/usuarios'),
+  getById: (id: number) => api.get(`/usuarios/${id}`),
+  create: (data: any) => api.post('/usuarios', data),
+  update: (id: number, data: any) => api.put(`/usuarios/${id}`, data),
+  delete: (id: number) => api.delete(`/usuarios/${id}`),
 };
 
 export const categoryService = {
