@@ -30,16 +30,36 @@ const ProductDetail = () => {
   const loadProductoData = async () => {
     try {
       setLoading(true);
-      const [productoRes, comentariosRes] = await Promise.all([
+      const results = await Promise.allSettled([
         getProducto(id),
         getComentariosByProducto(id)
       ]);
-      setProducto(productoRes.data);
-      setComentarios(comentariosRes.data);
+
+      const prodRes = results[0];
+      const comRes = results[1];
+
+      if (prodRes.status === 'fulfilled') {
+        const p = prodRes.value.data;
+        if (p.categoriaNombre && !p.categoria) p.categoria = { nombre: p.categoriaNombre };
+        if (p.subcategoriaNombre && !p.subcategoria) p.subcategoria = { nombre: p.subcategoriaNombre };
+        setProducto(p);
+      } else {
+        throw prodRes.reason;
+      }
+
+      if (comRes.status === 'fulfilled') {
+        const data = comRes.value.data;
+        const comentariosArray = Array.isArray(data) ? data : (data.comentarios || []);
+        setComentarios(comentariosArray);
+      } else {
+        setComentarios([]);
+        console.warn('No se pudieron cargar comentarios para producto', id, comRes.reason);
+      }
+
       setError(null);
     } catch (err) {
-      setError('Error al cargar el producto');
-      console.error(err);
+      console.error('Error cargando producto:', err.response || err);
+      setError(err.response?.data?.message || err.message || 'Error al cargar el producto');
     } finally {
       setLoading(false);
     }
@@ -80,9 +100,11 @@ const ProductDetail = () => {
       setContenido('');
       setShowReviewForm(false);
       
-      // Recargar comentarios
+      // Recargar comentarios (normalizar shape de respuesta)
       const response = await getComentariosByProducto(id);
-      setComentarios(response.data);
+      const data = response.data;
+      const comentariosArray = Array.isArray(data) ? data : (data.comentarios || []);
+      setComentarios(comentariosArray);
       
       alert('Comentario agregado exitosamente');
     } catch (err) {
