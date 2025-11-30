@@ -33,7 +33,10 @@ export default function LoginScreen({ navigation }: any) {
         setError('No se recibió el token. Verifica las credenciales o el servidor.');
         return;
       }
-      navigation.replace('Home', { isLoggedIn: true, userDocument: numeroDocumento });
+      // Obtener usuario guardado en AsyncStorage para mostrar nombre en Home
+      const currentUser = await authService.getCurrentUser();
+      const displayName = currentUser?.nombre ? `${currentUser.nombre} ${currentUser.apellido || ''}`.trim() : numeroDocumento;
+      navigation.replace('Home', { isLoggedIn: true, userDocument: numeroDocumento, userName: displayName });
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId);
       // Muestra el mensaje exacto del backend o error de red

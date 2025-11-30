@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image } from 'react-native';
-import { productService, categoryService } from '../services/api';
+import { productService, categoryService, getFullUrl } from '../services/api';
 import ComuctivaLogo from '../components/ComuctivaLogo';
 
 interface Producto {
@@ -28,6 +28,8 @@ const HomeScreen = ({ navigation, route }: any) => {
   // Obtener parámetros de navegación para saber si está logueado
   const isLoggedIn = route?.params?.isLoggedIn || false;
   const userDocument = route?.params?.userDocument || '';
+  // userName viene desde el login si está disponible; si no, usar el documento
+  const userName = route?.params?.userName || userDocument || '';
 
   useEffect(() => {
     handleCategoriaChange(null);
@@ -42,7 +44,6 @@ const HomeScreen = ({ navigation, route }: any) => {
         productService.getAll(),
         categoryService.getAll()
       ]);
-      console.log('Respuesta productos:', productosRes.data);
       setProductos(productosRes.data);
       setCategorias(categoriasRes.data);
       setError(null);
@@ -50,7 +51,6 @@ const HomeScreen = ({ navigation, route }: any) => {
       // Mostrar el error exacto devuelto por el backend
       const backendError = err?.response?.data?.message || err?.response?.data || err?.message || 'Error al cargar los datos';
       setError(backendError);
-      console.log('Error productos:', err);
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,11 @@ const HomeScreen = ({ navigation, route }: any) => {
     <View style={styles.modernCard}>
       <View style={styles.modernImageContainer}>
         {item.imagenUrl ? (
-          <Image source={{ uri: item.imagenUrl }} style={styles.modernProductImage} resizeMode="cover" />
+          <Image
+            source={{ uri: getFullUrl(item.imagenUrl) }}
+            style={styles.modernProductImage}
+            resizeMode="cover"
+          />
         ) : (
           <View style={styles.placeholderImage}>
             <Text style={styles.placeholderIcon}>📱</Text>
@@ -154,7 +158,7 @@ const HomeScreen = ({ navigation, route }: any) => {
               </View>
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userText}>Usuario: {userDocument}</Text>
+              <Text style={styles.userText}>Usuario: {userName}</Text>
               <TouchableOpacity 
                 style={styles.logoutButton}
                 onPress={() => navigation.replace('Home')}

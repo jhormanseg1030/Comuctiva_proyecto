@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://172.16.103.228:8080/api'; // <-- Reemplaza por tu IP local
+const API_URL = 'http://192.168.1.9:8080/api'; // <-- Reemplaza por tu IP local
 // Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
@@ -53,6 +53,31 @@ export const authService = {
     const response = await api.post('/auth/register', data);
     return response.data;
   }
+};
+
+// Base host (sin el sufijo /api) y helper para construir URLs completas de recursos (por ejemplo imágenes)
+export const API_BASE_HOST = API_URL.replace(/\/api\/?$/, '');
+
+import { Platform } from 'react-native';
+
+export const getFullUrl = (path?: string | null) => {
+  if (!path) return '';
+  // Si path es URL absoluta y contiene localhost/127.0.0.1, en Android emulador reemplazar por 10.0.2.2
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    if (Platform.OS === 'android' && /localhost|127\.0\.0\.1/.test(path)) {
+      return path.replace(/localhost|127\.0\.0\.1/, '10.0.2.2');
+    }
+    return path;
+  }
+
+  // Si no es URL absoluta, construir una a partir del host de la API
+  const sep = path.startsWith('/') ? '' : '/';
+  let host = API_BASE_HOST;
+  // En emulador Android clásico, si el host es localhost o 127.0.0.1, usar 10.0.2.2
+  if (Platform.OS === 'android' && /localhost|127\.0\.0\.1/.test(host)) {
+    host = host.replace(/localhost|127\.0\.0\.1/, '10.0.2.2');
+  }
+  return `${host}${sep}${path}`;
 };
 
 export const userService = {
