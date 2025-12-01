@@ -1,4 +1,4 @@
-package com.ecomerce.service;
+package com.ecomerce.backup;
 
 import com.ecomerce.model.*;
 import com.ecomerce.repository.*;
@@ -8,9 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
-import com.ecomerce.dto.PedidoDTO;
-import com.ecomerce.dto.DetallePedidoDTO;
 
 @Service
 @Transactional
@@ -106,22 +103,6 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public List<Pedido> obtenerPedidosPorUsuario(String numeroDocumento) {
         return pedidoRepository.findByCompradorNumeroDocumento(numeroDocumento);
-    }
-
-    @Transactional(readOnly = true)
-    public List<PedidoDTO> obtenerPedidosPorUsuarioDTO(String numeroDocumento) {
-        List<Pedido> pedidos = pedidoRepository.findByCompradorNumeroDocumento(numeroDocumento);
-        return pedidos.stream()
-                .map(PedidoDTO::new)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<DetallePedidoDTO> obtenerVentasPorVendedorDTO(String numeroDocumento) {
-        List<DetallePedido> ventas = detallePedidoRepository.findByVendedorNumeroDocumento(numeroDocumento);
-        return ventas.stream()
-                .map(DetallePedidoDTO::new)
-                .collect(Collectors.toList());
     }
 
     // Obtener todos los pedidos (ADMIN)

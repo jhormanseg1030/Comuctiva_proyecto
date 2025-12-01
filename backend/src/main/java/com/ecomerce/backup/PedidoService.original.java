@@ -1,20 +1,14 @@
-package com.ecomerce.service;
+package com.ecomerce.backup;
 
 import com.ecomerce.model.*;
 import com.ecomerce.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+// Backup service annotations removed to avoid duplicate bean registration
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
-import com.ecomerce.dto.PedidoDTO;
-import com.ecomerce.dto.DetallePedidoDTO;
 
-@Service
-@Transactional
-public class PedidoService {
+class PedidoService {
 
     @Autowired
     private PedidoRepository pedidoRepository;
@@ -103,48 +97,32 @@ public class PedidoService {
     }
 
     // Obtener pedidos de un usuario
-    @Transactional(readOnly = true)
+    // @Transactional(readOnly = true)
     public List<Pedido> obtenerPedidosPorUsuario(String numeroDocumento) {
         return pedidoRepository.findByCompradorNumeroDocumento(numeroDocumento);
     }
 
-    @Transactional(readOnly = true)
-    public List<PedidoDTO> obtenerPedidosPorUsuarioDTO(String numeroDocumento) {
-        List<Pedido> pedidos = pedidoRepository.findByCompradorNumeroDocumento(numeroDocumento);
-        return pedidos.stream()
-                .map(PedidoDTO::new)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<DetallePedidoDTO> obtenerVentasPorVendedorDTO(String numeroDocumento) {
-        List<DetallePedido> ventas = detallePedidoRepository.findByVendedorNumeroDocumento(numeroDocumento);
-        return ventas.stream()
-                .map(DetallePedidoDTO::new)
-                .collect(Collectors.toList());
-    }
-
     // Obtener todos los pedidos (ADMIN)
-    @Transactional(readOnly = true)
+    // @Transactional(readOnly = true)
     public List<Pedido> obtenerTodosPedidos() {
         return pedidoRepository.findAll();
     }
 
     // Obtener pedido por ID
-    @Transactional(readOnly = true)
+    // @Transactional(readOnly = true)
     public Pedido obtenerPedidoPorId(Long id) {
         return pedidoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
     }
 
     // Obtener detalles de un pedido
-    @Transactional(readOnly = true)
+    // @Transactional(readOnly = true)
     public List<DetallePedido> obtenerDetallesPedido(Long pedidoId) {
         return detallePedidoRepository.findByPedidoId(pedidoId);
     }
 
     // Obtener ventas de un vendedor
-    @Transactional(readOnly = true)
+    // @Transactional(readOnly = true)
     public List<DetallePedido> obtenerVentasPorVendedor(String numeroDocumento) {
         return detallePedidoRepository.findByVendedorNumeroDocumento(numeroDocumento);
     }
