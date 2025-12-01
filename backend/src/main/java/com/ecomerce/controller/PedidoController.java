@@ -85,12 +85,7 @@ public class PedidoController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> obtenerTodosPedidos() {
         try {
-            List<Pedido> pedidos = pedidoService.obtenerTodosPedidos();
-            
-            List<PedidoDTO> pedidosDTO = pedidos.stream()
-                    .map(PedidoDTO::new)
-                    .collect(Collectors.toList());
-
+            List<PedidoDTO> pedidosDTO = pedidoService.obtenerTodosPedidosDTO();
             return ResponseEntity.ok(pedidosDTO);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -105,25 +100,21 @@ public class PedidoController {
             @PathVariable Long pedidoId,
             Authentication authentication) {
         try {
-            Pedido pedido = pedidoService.obtenerPedidoPorId(pedidoId);
-            
+            PedidoDTO pedidoDTO = pedidoService.obtenerPedidoDTOPorId(pedidoId);
+
             // Verificar que el usuario puede ver este pedido
             if (!authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-                if (!pedido.getComprador().getNumeroDocumento().equals(authentication.getName())) {
+                if (!pedidoDTO.getUsuarioDocumento().equals(authentication.getName())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(new MessageResponse("No tienes permiso para ver este pedido"));
                 }
             }
 
-            List<DetallePedido> detalles = pedidoService.obtenerDetallesPedido(pedidoId);
-            
-            List<DetallePedidoDTO> detallesDTO = detalles.stream()
-                    .map(DetallePedidoDTO::new)
-                    .collect(Collectors.toList());
+            List<DetallePedidoDTO> detallesDTO = pedidoService.obtenerDetallesPedidoDTO(pedidoId);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("pedido", new PedidoDTO(pedido));
+            response.put("pedido", pedidoDTO);
             response.put("detalles", detallesDTO);
 
             return ResponseEntity.ok(response);

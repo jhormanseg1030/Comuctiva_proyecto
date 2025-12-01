@@ -106,14 +106,4 @@ export const getUsuario = (numeroDocumento) => api.get(`/usuarios/${numeroDocume
 export const updateUsuario = (numeroDocumento, userData) => api.put(`/usuarios/${numeroDocumento}`, userData);
 export const cambiarPassword = (numeroDocumento, passwordData) => api.put(`/usuarios/${numeroDocumento}/cambiar-password`, passwordData);
 
-// Admin
-export const getAdminSummary = () => api.get('/admin/summary');
-export const getAllUsuarios = () => api.get('/usuarios');
-export const cambiarRolUsuario = (numeroDocumento, rol) => api.put(`/usuarios/${numeroDocumento}/rol?rol=${rol}`);
-export const cambiarEstadoUsuario = (numeroDocumento, activo) => api.put(`/usuarios/${numeroDocumento}/estado?activo=${activo}`);
-
-// Pedidos (admin)
-export const getAllPedidos = () => api.get('/pedidos');
-export const actualizarEstadoPedido = (id, estado) => api.put(`/pedidos/${id}/estado?estado=${encodeURIComponent(estado)}`);
-
 export default api;

@@ -1,3 +1,4 @@
+// Backup of current NavigationBar before re-adding Usuarios and Pedidos links in dropdown
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar, Nav, Container, Badge, NavDropdown } from 'react-bootstrap';
@@ -62,9 +63,6 @@ const NavigationBar = () => {
               <NavDropdown title={`👤 ${user.nombre}`} id="user-dropdown">
                 <NavDropdown.Item as={Link} to="/mi-cuenta">👤 Mi Cuenta</NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/mis-pedidos">📋 Mis Pedidos</NavDropdown.Item>
-                {user?.rol === 'ADMIN' && (
-                  <NavDropdown.Item as={Link} to="/admin">⚙️ Admin</NavDropdown.Item>
-                )}
                 <NavDropdown.Divider />
                 <NavDropdown.Item as={Link} to="/publicar-producto">📦 Publicar Producto</NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/mis-productos">🏪 Mis Productos</NavDropdown.Item>

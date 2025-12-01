@@ -130,6 +130,14 @@ public class PedidoService {
         return pedidoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public List<PedidoDTO> obtenerTodosPedidosDTO() {
+        List<Pedido> pedidos = pedidoRepository.findAll();
+        return pedidos.stream()
+                .map(PedidoDTO::new)
+                .collect(Collectors.toList());
+    }
+
     // Obtener pedido por ID
     @Transactional(readOnly = true)
     public Pedido obtenerPedidoPorId(Long id) {
@@ -137,10 +145,25 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
     }
 
+    @Transactional(readOnly = true)
+    public PedidoDTO obtenerPedidoDTOPorId(Long id) {
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+        return new PedidoDTO(pedido);
+    }
+
     // Obtener detalles de un pedido
     @Transactional(readOnly = true)
     public List<DetallePedido> obtenerDetallesPedido(Long pedidoId) {
         return detallePedidoRepository.findByPedidoId(pedidoId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DetallePedidoDTO> obtenerDetallesPedidoDTO(Long pedidoId) {
+        List<DetallePedido> detalles = detallePedidoRepository.findByPedidoId(pedidoId);
+        return detalles.stream()
+                .map(DetallePedidoDTO::new)
+                .collect(Collectors.toList());
     }
 
     // Obtener ventas de un vendedor
