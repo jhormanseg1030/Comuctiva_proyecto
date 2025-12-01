@@ -23,6 +23,7 @@ import MyOrders from './pages/MyOrders';
 import CreateProduct from './pages/CreateProduct';
 import MyProducts from './pages/MyProducts';
 import MySales from './pages/MySales';
+import Reports from './pages/Reports';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -102,6 +103,14 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <MySales />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reportes" 
+              element={
+                <ProtectedRoute>
+                  <Reports />
                 </ProtectedRoute>
               } 
             />
