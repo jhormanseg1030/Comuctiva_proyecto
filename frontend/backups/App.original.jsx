@@ -23,11 +23,6 @@ import MyOrders from './pages/MyOrders';
 import CreateProduct from './pages/CreateProduct';
 import MyProducts from './pages/MyProducts';
 import MySales from './pages/MySales';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminRoute from './components/AdminRoute';
-import AdminUsuarios from './pages/AdminUsuarios';
-import AdminPedidos from './pages/AdminPedidos';
-import AdminLayout from './pages/AdminLayout';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -110,11 +105,6 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="/admin" element={<AdminRoute><AdminLayout/></AdminRoute>}>
-              <Route index element={<AdminDashboard/>} />
-              <Route path="usuarios" element={<AdminUsuarios/>} />
-              <Route path="pedidos" element={<AdminPedidos/>} />
-            </Route>
             
             {/* Catch all */}
             <Route path="*" element={<Navigate to="/" />} />
