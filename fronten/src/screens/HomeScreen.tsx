@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { productService, categoryService, getFullUrl } from '../services/api';
 import ComuctivaLogo from '../components/ComuctivaLogo';
 
@@ -24,6 +26,9 @@ const HomeScreen = ({ navigation, route }: any) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [ordenamiento, setOrdenamiento] = useState<'reciente' | 'nombre'>('reciente');
+  const [favorites, setFavorites] = useState<Producto[]>([]);
+  const [showFavorites, setShowFavorites] = useState<boolean>(false);
+  const isFocused = useIsFocused();
   
   // Obtener parámetros de navegación para saber si está logueado
   const isLoggedIn = route?.params?.isLoggedIn || false;
@@ -31,11 +36,105 @@ const HomeScreen = ({ navigation, route }: any) => {
   // userName viene desde el login si está disponible; si no, usar el documento
   const userName = route?.params?.userName || userDocument || '';
 
+  const GLOBAL_FALLBACK_KEY = '@comuctiva_favorites_v1';
+
+  const getFavoritesKey = () => {
+    const id = route?.params?.userDocument || route?.params?.userName || 'guest';
+    return `@comuctiva_favorites_${id}`;
+  };
+
   useEffect(() => {
     handleCategoriaChange(null);
     // También carga las categorías
     // categoryService.getAll().then(res => setCategorias(res.data));
-  }, []);
+    // Reload favorites when the user params change or when the screen gains focus
+    if (isFocused) loadFavorites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route?.params?.userDocument, route?.params?.userName, isFocused]);
+
+  const loadFavorites = async () => {
+    try {
+      const key = getFavoritesKey();
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) {
+        setFavorites(JSON.parse(raw));
+        return;
+      }
+      // try guest favorites (anonymous) and merge if user logged in
+      const guestRaw = await AsyncStorage.getItem('@comuctiva_favorites_guest');
+      if (guestRaw && key !== '@comuctiva_favorites_guest') {
+        const guestList: Producto[] = JSON.parse(guestRaw);
+        // if user has no favorites yet, adopt guest ones
+        const existing = [] as Producto[];
+        const merged = [...guestList, ...existing]
+          .filter((v, i, a) => a.findIndex(x => x.id === v.id) === i);
+        if (merged.length > 0) {
+          setFavorites(merged);
+          await AsyncStorage.setItem(key, JSON.stringify(merged));
+          // optionally remove guest key to avoid duplicate merges
+          await AsyncStorage.removeItem('@comuctiva_favorites_guest');
+          return;
+        }
+      }
+      // fallback/legacy migration
+      const legacy = await AsyncStorage.getItem(GLOBAL_FALLBACK_KEY);
+      if (legacy) {
+        setFavorites(JSON.parse(legacy));
+        await AsyncStorage.setItem(key, legacy);
+        await AsyncStorage.removeItem(GLOBAL_FALLBACK_KEY);
+      } else {
+        setFavorites([]);
+      }
+    } catch (e) {
+      console.warn('Error cargando favoritos', e);
+    }
+  };
+
+  const persistFavorites = async (next: Producto[]) => {
+    try {
+      const key = getFavoritesKey();
+      await AsyncStorage.setItem(key, JSON.stringify(next));
+    } catch (e) {
+      console.warn('Error guardando favoritos', e);
+    }
+  };
+
+  const toggleFavorite = async (p: Producto) => {
+    try {
+      const exists = favorites.some(f => f.id === p.id);
+      let next: Producto[];
+      if (exists) next = favorites.filter(f => f.id !== p.id);
+      else next = [p, ...favorites];
+      setFavorites(next);
+      await persistFavorites(next);
+    } catch (e) {
+      console.warn('toggleFavorite error', e);
+    }
+  };
+
+  const removeFavoriteLocal = async (id: number) => {
+    try {
+      const next = favorites.filter(f => f.id !== id);
+      setFavorites(next);
+      await persistFavorites(next);
+    } catch (e) {
+      console.warn('removeFavoriteLocal error', e);
+    }
+  };
+
+  const clearFavoritesLocal = () => {
+    // Clear only local state so favorites are not visible when logged out,
+    // but keep them persisted for the user so they reappear after login.
+    setFavorites([]);
+    setShowFavorites(false);
+  };
+
+  const isFavorite = (id: number) => favorites.some(f => f.id === id);
+
+  const goToFavorites = () => {
+    // Mostrar la vista de favoritos dentro del HomeScreen
+    setShowFavorites(true);
+  };
 
   const loadInitialData = async () => {
     try {
@@ -138,6 +237,29 @@ const HomeScreen = ({ navigation, route }: any) => {
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
+      <View style={styles.modernImageContainer}>
+        {item.imagenUrl ? (
+          <Image
+            source={{ uri: getFullUrl(item.imagenUrl) }}
+            style={styles.modernProductImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <Text style={styles.placeholderIcon}>📱</Text>
+          </View>
+        )}
+        <TouchableOpacity style={styles.favoriteButton} onPress={async () => { await toggleFavorite(item); setShowFavorites(true); }}>
+          <Text style={styles.favoriteIcon}>{isFavorite(item.id) ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.modernCardContent}>
+        <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
+        <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
+        <TouchableOpacity style={styles.addToCartButton}>
+          <Text style={styles.addToCartText}>Agregar al carrito</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -163,7 +285,10 @@ const HomeScreen = ({ navigation, route }: any) => {
               <Text style={styles.userText}>Usuario: {userName}</Text>
               <TouchableOpacity 
                 style={styles.logoutButton}
-                onPress={() => navigation.replace('Home')}
+                onPress={async () => {
+                  clearFavoritesLocal();
+                  navigation.replace('Home');
+                }}
               >
                 <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
               </TouchableOpacity>
@@ -232,10 +357,49 @@ const HomeScreen = ({ navigation, route }: any) => {
         </TouchableOpacity>
       )}
 
-      {loading ? (
+      {showFavorites ? (
+        // Mostrar lista de favoritos inline
+        favorites.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No tienes favoritos</Text>
+            <Text>Marca productos con el corazón para agregarlos aquí.</Text>
+          </View>
+        ) : (
+          <FlatList
+            key={`numCols-1`}
+            data={favorites}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => (
+              <View style={styles.card}>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  {item.imagenUrl ? (
+                    <Image source={{ uri: getFullUrl(item.imagenUrl) }} style={{ width: 90, height: 90, borderRadius: 8 }} />
+                  ) : (
+                    <View style={{ width: 90, height: 90, borderRadius: 8, backgroundColor: '#e2e8f0' }} />
+                  )}
+                  <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600' }} numberOfLines={2}>{item.nombre}</Text>
+                    <Text style={{ color: '#22c55e', fontWeight: '700', marginTop: 6 }}>${item.precio.toLocaleString()}</Text>
+                    <View style={{ flexDirection: 'row', marginTop: 10, gap: 8 }}>
+                      <TouchableOpacity style={styles.addToCartButton}>
+                        <Text style={styles.addToCartText}>Agregar al carrito</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.addToCartButton, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e11d48' }]} onPress={() => removeFavoriteLocal(item.id)}>
+                        <Text style={{ color: '#e11d48', fontWeight: '600' }}>Eliminar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
+            contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 8 }}
+          />
+        )
+      ) : loading ? (
         <ActivityIndicator size="large" color="#22c55e" style={{ marginTop: 30 }} />
       ) : productosOrdenados.length > 0 ? (
         <FlatList
+          key={`numCols-2`}
           data={productosOrdenados}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderProducto}
@@ -254,13 +418,13 @@ const HomeScreen = ({ navigation, route }: any) => {
       
       {/* Barra de navegación inferior */}
       <View style={styles.bottomNavigation}>
-        <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
-          <Text style={[styles.navIcon, styles.navIconActive]}>🏠</Text>
-          <Text style={[styles.navLabel, styles.navLabelActive]}>Inicio</Text>
+        <TouchableOpacity style={[styles.navItem, !showFavorites ? styles.navItemActive : undefined]} onPress={() => setShowFavorites(false)}>
+          <Text style={[styles.navIcon, !showFavorites ? styles.navIconActive : undefined]}>🏠</Text>
+          <Text style={[styles.navLabel, !showFavorites ? styles.navLabelActive : undefined]}>Inicio</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>❤️</Text>
-          <Text style={styles.navLabel}>Favoritos</Text>
+        <TouchableOpacity style={[styles.navItem, showFavorites ? styles.navItemActive : undefined]} onPress={() => setShowFavorites(true)}>
+          <Text style={[styles.navIcon, showFavorites ? styles.navIconActive : undefined]}>❤️</Text>
+          <Text style={[styles.navLabel, showFavorites ? styles.navLabelActive : undefined]}>Favoritos</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <Text style={styles.navIcon}>🛒</Text>
