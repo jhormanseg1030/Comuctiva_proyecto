@@ -5,6 +5,7 @@ import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 
 const Stack = createNativeStackNavigator();
@@ -55,7 +56,21 @@ export default function App() {
               fontWeight: 'bold',
             },
           }}
-        /> 
+        />
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetailScreen}
+          options={{
+            title: 'Detalle del producto',
+            headerStyle: {
+              backgroundColor: '#22c55e',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

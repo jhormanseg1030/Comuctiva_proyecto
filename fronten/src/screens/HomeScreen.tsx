@@ -212,6 +212,31 @@ const HomeScreen = ({ navigation, route }: any) => {
 
   const renderProducto = ({ item }: { item: Producto }) => (
     <View style={styles.modernCard}>
+      <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { id: item.id })} activeOpacity={0.8} style={{ flex: 1 }}>
+        <View style={styles.modernImageContainer}>
+          {item.imagenUrl ? (
+            <Image
+              source={{ uri: getFullUrl(item.imagenUrl) }}
+              style={styles.modernProductImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.placeholderImage}>
+              <Text style={styles.placeholderIcon}>📱</Text>
+            </View>
+          )}
+          <TouchableOpacity style={styles.favoriteButton}>
+            <Text style={styles.favoriteIcon}>🤍</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.modernCardContent}>
+          <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
+          <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
+          <TouchableOpacity style={styles.addToCartButton}>
+            <Text style={styles.addToCartText}>Agregar al carrito</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
       <View style={styles.modernImageContainer}>
         {item.imagenUrl ? (
           <Image
