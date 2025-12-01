@@ -1,4 +1,4 @@
-package com.ecomerce.controller;
+package com.ecomerce.backup;
 
 import com.ecomerce.dto.DetallePedidoDTO;
 import com.ecomerce.dto.MessageResponse;
@@ -18,10 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("/pedidos")
-@CrossOrigin(origins = "*", maxAge = 3600)
-public class PedidoController {
+// Backup controller (disabled to avoid duplicate bean registration)
+// @RestController
+// @RequestMapping("/pedidos")
+// @CrossOrigin(origins = "*", maxAge = 3600)
+class PedidoController {
 
     @Autowired
     private PedidoService pedidoService;
@@ -54,15 +55,16 @@ public class PedidoController {
     public ResponseEntity<?> obtenerMisPedidos(Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            List<PedidoDTO> pedidosDTO = pedidoService.obtenerPedidosPorUsuarioDTO(numeroDocumento);
+            List<Pedido> pedidos = pedidoService.obtenerPedidosPorUsuario(numeroDocumento);
+            
+            List<PedidoDTO> pedidosDTO = pedidos.stream()
+                    .map(PedidoDTO::new)
+                    .collect(Collectors.toList());
+
             return ResponseEntity.ok(pedidosDTO);
         } catch (Exception e) {
-            // Registrar el error completo en el servidor (no exponer al cliente)
-            e.printStackTrace();
-
-            // Devolver mensaje genérico al cliente
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Error interno del servidor"));
+                    .body(new MessageResponse("Error: " + e.getMessage()));
         }
     }
 
@@ -72,7 +74,12 @@ public class PedidoController {
     public ResponseEntity<?> obtenerMisVentas(Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            List<DetallePedidoDTO> ventasDTO = pedidoService.obtenerVentasPorVendedorDTO(numeroDocumento);
+            List<DetallePedido> ventas = pedidoService.obtenerVentasPorVendedor(numeroDocumento);
+            
+            List<DetallePedidoDTO> ventasDTO = ventas.stream()
+                    .map(DetallePedidoDTO::new)
+                    .collect(Collectors.toList());
+
             return ResponseEntity.ok(ventasDTO);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
