@@ -5,6 +5,7 @@ import com.ecomerce.dto.ProductoDTO;
 import com.ecomerce.model.Producto;
 import com.ecomerce.service.FileStorageService;
 import com.ecomerce.service.ProductoService;
+import com.ecomerce.service.ComentarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +28,9 @@ public class ProductoController {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private ComentarioService comentarioService;
+
     private String getBaseUrl() {
         return "http://localhost:8080/api/files/productos/";
     }
@@ -38,6 +42,13 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
+        // completar calificaciones y conteo de comentarios
+        productos.forEach(p -> {
+            Double prom = comentarioService.calcularPromedioCalificacion(p.getId());
+            int total = comentarioService.contarComentariosPorProducto(p.getId());
+            p.setCalificacionPromedio(prom);
+            p.setTotalComentarios(total);
+        });
         return ResponseEntity.ok(productos);
     }
 
@@ -48,6 +59,12 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
+        productos.forEach(p -> {
+            Double prom = comentarioService.calcularPromedioCalificacion(p.getId());
+            int total = comentarioService.contarComentariosPorProducto(p.getId());
+            p.setCalificacionPromedio(prom);
+            p.setTotalComentarios(total);
+        });
         return ResponseEntity.ok(productos);
     }
 
@@ -66,6 +83,12 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
+        productos.forEach(p -> {
+            Double prom = comentarioService.calcularPromedioCalificacion(p.getId());
+            int total = comentarioService.contarComentariosPorProducto(p.getId());
+            p.setCalificacionPromedio(prom);
+            p.setTotalComentarios(total);
+        });
         return ResponseEntity.ok(productos);
     }
 
@@ -76,6 +99,29 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
+        productos.forEach(p -> {
+            Double prom = comentarioService.calcularPromedioCalificacion(p.getId());
+            int total = comentarioService.contarComentariosPorProducto(p.getId());
+            p.setCalificacionPromedio(prom);
+            p.setTotalComentarios(total);
+        });
+        return ResponseEntity.ok(productos);
+    }
+
+    // Buscar productos por palabra clave (nombre o descripción)
+    @GetMapping("/buscar")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ProductoDTO>> buscarProductos(@RequestParam(required = false) String keyword) {
+        List<ProductoDTO> productos = productoService.buscarProductos(keyword)
+                .stream()
+                .map(ProductoDTO::new)
+                .collect(Collectors.toList());
+        productos.forEach(p -> {
+            Double prom = comentarioService.calcularPromedioCalificacion(p.getId());
+            int total = comentarioService.contarComentariosPorProducto(p.getId());
+            p.setCalificacionPromedio(prom);
+            p.setTotalComentarios(total);
+        });
         return ResponseEntity.ok(productos);
     }
 
@@ -86,6 +132,12 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
+        productos.forEach(p -> {
+            Double prom = comentarioService.calcularPromedioCalificacion(p.getId());
+            int total = comentarioService.contarComentariosPorProducto(p.getId());
+            p.setCalificacionPromedio(prom);
+            p.setTotalComentarios(total);
+        });
         return ResponseEntity.ok(productos);
     }
 

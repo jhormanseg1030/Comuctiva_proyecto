@@ -93,7 +93,7 @@ const ProductDetail = () => {
       await createComentario({
         productoId: parseInt(id),
         calificacion,
-        comentario: contenido
+        contenido
       });
       
       setCalificacion(5);

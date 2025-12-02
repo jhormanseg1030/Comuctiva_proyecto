@@ -34,6 +34,9 @@ public class ProductoDTO {
     // Información del usuario
     private String usuarioDocumento;
     private String usuarioNombre;
+    // Comentarios
+    private Double calificacionPromedio;
+    private Integer totalComentarios;
 
     public ProductoDTO(Producto producto) {
         this.id = producto.getId();
@@ -60,5 +63,6 @@ public class ProductoDTO {
             this.usuarioDocumento = producto.getUsuario().getNumeroDocumento();
             this.usuarioNombre = producto.getUsuario().getNombre() + " " + producto.getUsuario().getApellido();
         }
+        // calificacionPromedio and totalComentarios will be set by controller when available
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+// backup original ProductoService
 @Service
 public class ProductoService {
 
@@ -55,15 +56,6 @@ public class ProductoService {
 
     public List<Producto> obtenerProductosPorUsuario(String numeroDocumento) {
         return productoRepository.findByUsuarioNumeroDocumento(numeroDocumento);
-    }
-
-    // Buscar productos por palabra clave en nombre o descripción
-    public List<Producto> buscarProductos(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return productoRepository.findAll();
-        }
-        String q = keyword.trim();
-        return productoRepository.findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(q, q);
     }
 
     public Producto actualizarProducto(Long id, Producto productoActualizado) {
