@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+// backup of original ProductoRepository
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<Producto> findByCategoriaId(Long categoriaId);
@@ -14,6 +15,4 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<Producto> findByActivo(Boolean activo);
     List<Producto> findByCategoriaIdAndActivo(Long categoriaId, Boolean activo);
     List<Producto> findBySubcategoriaIdAndActivo(Long subcategoriaId, Boolean activo);
-    // Búsqueda por nombre o descripción (case-insensitive)
-    List<Producto> findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(String nombre, String descripcion);
 }
