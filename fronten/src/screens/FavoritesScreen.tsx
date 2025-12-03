@@ -46,12 +46,16 @@ const FavoritesScreen = ({ navigation }: any) => {
     <View style={styles.card}>
       <View style={styles.row}>
         {item.imagenUrl ? (
-          <Image source={{ uri: getFullUrl(item.imagenUrl) }} style={styles.image} />
+          <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { id: item.id })}>
+            <Image source={{ uri: getFullUrl(item.imagenUrl) }} style={styles.image} />
+          </TouchableOpacity>
         ) : (
           <View style={[styles.image, styles.placeholder]} />
         )}
         <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={2}>{item.nombre}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { id: item.id })}>
+            <Text style={styles.title} numberOfLines={2}>{item.nombre}</Text>
+          </TouchableOpacity>
           <Text style={styles.price}>${item.precio.toLocaleString()}</Text>
           <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.addToCartButton}>

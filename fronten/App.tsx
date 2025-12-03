@@ -7,6 +7,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
+import AccountScreen from './src/screens/AccountScreen';
+import CreateProductScreen from './src/screens/CreateProductScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -69,6 +71,26 @@ export default function App() {
             headerTitleStyle: {
               fontWeight: 'bold',
             },
+          }}
+        />
+        <Stack.Screen
+          name="Account"
+          component={AccountScreen}
+          options={{
+            title: 'Mi cuenta',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="CreateProduct"
+          component={CreateProductScreen}
+          options={{
+            title: 'Publicar producto',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
           }}
         />
       </Stack.Navigator>

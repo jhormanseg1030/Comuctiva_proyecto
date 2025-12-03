@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { authService } from '../services/api';
 import { loginStyles } from '../styles/LoginStyles';
 import { Colors } from '../styles/GlobalStyles';
@@ -48,11 +48,16 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   return (
-    <View style={loginStyles.container}>
-      <ScrollView 
-        contentContainerStyle={loginStyles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
+    <KeyboardAvoidingView
+      style={loginStyles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView 
+          contentContainerStyle={loginStyles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Header con logo y título */}
         <View style={loginStyles.headerContainer}>
           <View style={loginStyles.logoWrapper}>
@@ -157,6 +162,7 @@ export default function LoginScreen({ navigation }: any) {
           </Text>
         </View> */}
       </ScrollView>
-    </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }

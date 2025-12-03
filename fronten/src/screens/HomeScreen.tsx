@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useIsFocused } from '@react-navigation/native';
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image, TouchableWithoutFeedback } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { productService, categoryService, getFullUrl } from '../services/api';
+import { productService, categoryService, getFullUrl, authService } from '../services/api';
 import ComuctivaLogo from '../components/ComuctivaLogo';
 
 interface Producto {
@@ -28,6 +28,7 @@ const HomeScreen = ({ navigation, route }: any) => {
   const [ordenamiento, setOrdenamiento] = useState<'reciente' | 'nombre'>('reciente');
   const [favorites, setFavorites] = useState<Producto[]>([]);
   const [showFavorites, setShowFavorites] = useState<boolean>(false);
+  const [showUserMenu, setShowUserMenu] = useState<boolean>(false);
   const isFocused = useIsFocused();
   
   // Obtener parámetros de navegación para saber si está logueado
@@ -212,7 +213,10 @@ const HomeScreen = ({ navigation, route }: any) => {
 
   const renderProducto = ({ item }: { item: Producto }) => (
     <View style={styles.modernCard}>
-      <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { id: item.id })} activeOpacity={0.8} style={{ flex: 1 }}>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => navigation.navigate('ProductDetail', { id: item.id })}
+      >
         <View style={styles.modernImageContainer}>
           {item.imagenUrl ? (
             <Image
@@ -225,34 +229,23 @@ const HomeScreen = ({ navigation, route }: any) => {
               <Text style={styles.placeholderIcon}>📱</Text>
             </View>
           )}
-          <TouchableOpacity style={styles.favoriteButton}>
-            <Text style={styles.favoriteIcon}>🤍</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.modernCardContent}>
-          <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
-          <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
-          <TouchableOpacity style={styles.addToCartButton}>
-            <Text style={styles.addToCartText}>Agregar al carrito</Text>
-          </TouchableOpacity>
         </View>
       </TouchableOpacity>
-      <View style={styles.modernImageContainer}>
-        {item.imagenUrl ? (
-          <Image
-            source={{ uri: getFullUrl(item.imagenUrl) }}
-            style={styles.modernProductImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderIcon}>📱</Text>
-          </View>
-        )}
-        <TouchableOpacity style={styles.favoriteButton} onPress={async () => { await toggleFavorite(item); setShowFavorites(true); }}>
-          <Text style={styles.favoriteIcon}>{isFavorite(item.id) ? '❤️' : '🤍'}</Text>
-        </TouchableOpacity>
-      </View>
+
+      {/* Favorito en overlay (captura su propio onPress) */}
+      <TouchableOpacity
+        style={styles.favoriteButton}
+        onPress={async () => {
+          try {
+            await toggleFavorite(item);
+          } catch (e) {
+            console.warn('Error toggling favorite', e);
+          }
+        }}
+      >
+        <Text style={styles.favoriteIcon}>{isFavorite(item.id) ? '❤️' : '🤍'}</Text>
+      </TouchableOpacity>
+
       <View style={styles.modernCardContent}>
         <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
         <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
@@ -265,6 +258,11 @@ const HomeScreen = ({ navigation, route }: any) => {
 
   return (
     <View style={styles.container}>
+      {showUserMenu && (
+        <TouchableWithoutFeedback onPress={() => setShowUserMenu(false)}>
+          <View style={styles.menuBackdrop} />
+        </TouchableWithoutFeedback>
+      )}
       <View style={styles.contentContainer}>
         {isLoggedIn ? (
           // Vista cuando el usuario está logueado
@@ -281,18 +279,36 @@ const HomeScreen = ({ navigation, route }: any) => {
                 <Text style={styles.subtitleLoggedIn}>¡Bienvenido de vuelta!</Text>
               </View>
             </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userText}>Usuario: {userName}</Text>
-              <TouchableOpacity 
-                style={styles.logoutButton}
-                onPress={async () => {
-                  clearFavoritesLocal();
-                  navigation.replace('Home');
-                }}
-              >
-                <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.userInfoWrapper}>
+                <View style={styles.userInfo}>
+                  <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8} onPress={() => setShowUserMenu(s => !s)}>
+                    <Text style={styles.userText} numberOfLines={1} ellipsizeMode="tail">Usuario: {userName} ▾</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {showUserMenu && (
+                  <View style={styles.userMenu} pointerEvents="box-none">
+                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); navigation.navigate('Account'); }}>
+                      <Text style={styles.userMenuText}>Mi Cuenta</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); Alert.alert('Mis Pedidos', 'Función no implementada aún'); }}>
+                      <Text style={styles.userMenuText}>Mis Pedidos</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); navigation.navigate('CreateProduct'); }}>
+                      <Text style={styles.userMenuText}>Publicar Producto</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); Alert.alert('Mis Productos', 'Función no implementada aún'); }}>
+                      <Text style={styles.userMenuText}>Mis Productos</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); Alert.alert('Mis Ventas', 'Función no implementada aún'); }}>
+                      <Text style={styles.userMenuText}>Mis Ventas</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.userMenuItem} onPress={async () => { setShowUserMenu(false); await authService.logout(); navigation.replace('Home'); }}>
+                      <Text style={[styles.userMenuText, { color: '#e11d48', fontWeight: '700' }]}>Cerrar Sesión</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
           </>
         ) : (
           // Vista cuando el usuario NO está logueado
@@ -458,6 +474,69 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
+  smallAuthButton: {
+    backgroundColor: '#22c55e',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginLeft: 8,
+    elevation: 2,
+  },
+  userInfoWrapper: {
+    position: 'relative',
+  },
+  userButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  publishBtn: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#22c55e',
+    marginLeft: 8,
+  },
+  publishBtnText: {
+    color: '#22c55e',
+  },
+  userMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: 12,
+    left: 12,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#e6eef0',
+    elevation: 6,
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    overflow: 'hidden',
+  },
+  menuBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    zIndex: 990,
+  },
+  userMenuItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  userMenuText: {
+    fontSize: 15,
+    color: '#0f172a',
+  },
   authButtonText: {
     color: '#fff',
     fontWeight: 'bold',
@@ -526,13 +605,15 @@ const styles = StyleSheet.create({
   userInfo: {
     backgroundColor: '#f0fdf4', // Fondo verde muy claro
     borderRadius: 12,
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#22c55e',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   userText: {
     fontSize: 16,
