@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDateTime;
 
 @Service
 public class ProductoService {
@@ -108,37 +107,6 @@ public class ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         producto.setStock(producto.getStock() + cantidad);
-        return productoRepository.save(producto);
-    }
-
-    // Soft-delete (archive) the product image metadata (does not delete the file)
-    public Producto archiveImagenProducto(Long id, String adminDocumento) {
-        Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-
-        if (producto.getImagenUrl() == null || producto.getImagenUrl().isEmpty()) {
-            throw new RuntimeException("El producto no tiene imagen para archivar");
-        }
-
-        producto.setImagenDeleted(true);
-        producto.setImagenDeletedAt(LocalDateTime.now());
-        producto.setImagenDeletedBy(adminDocumento);
-
-        return productoRepository.save(producto);
-    }
-
-    public Producto restoreImagenProducto(Long id, String adminDocumento) {
-        Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-
-        if (!Boolean.TRUE.equals(producto.getImagenDeleted())) {
-            throw new RuntimeException("La imagen no está archivada");
-        }
-
-        producto.setImagenDeleted(false);
-        producto.setImagenDeletedAt(null);
-        producto.setImagenDeletedBy(null);
-
         return productoRepository.save(producto);
     }
 }

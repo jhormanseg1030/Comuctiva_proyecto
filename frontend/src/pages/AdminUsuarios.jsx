@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAllUsuarios, cambiarRolUsuario, cambiarEstadoUsuario } from '../services/api';
+import { getAllUsuarios, cambiarRolUsuario, cambiarEstadoUsuario, deleteUsuario } from '../services/api';
 
 const AdminUsuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -75,6 +75,16 @@ const AdminUsuarios = () => {
                   <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => handleCambiarRol(u.numeroDocumento, 'USER')}>Quitar Admin</button>
                 )}
                 <button className="btn btn-sm btn-outline-warning me-2" onClick={() => handleCambiarEstado(u.numeroDocumento, !u.activo)}>{u.activo ? 'Desactivar' : 'Activar'}</button>
+                <button className="btn btn-sm btn-outline-danger" onClick={async () => {
+                  if (!window.confirm(`Eliminar usuario ${u.numeroDocumento}? Esta acción no se puede deshacer.`)) return;
+                  try {
+                    await deleteUsuario(u.numeroDocumento);
+                    fetchUsuarios();
+                  } catch (err) {
+                    console.error(err);
+                    alert('Error al eliminar usuario');
+                  }
+                }}>Eliminar</button>
               </td>
             </tr>
           ))}

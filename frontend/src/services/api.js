@@ -84,6 +84,9 @@ export const deleteProducto = (id) => api.delete(`/productos/${id}`);
 export const cambiarEstadoProducto = (id, activo) => api.put(`/productos/${id}/estado?activo=${activo}`, {}, {
   headers: { 'Accept': 'application/json' }
 });
+export const archiveImagenProducto = (id) => api.put(`/productos/${id}/imagen/archive`);
+export const restoreImagenProducto = (id) => api.put(`/productos/${id}/imagen/restore`);
+export const deleteImagenProducto = (id) => api.delete(`/productos/${id}/imagen`);
 
 // Promociones
 export const getPromociones = () => api.get('/promociones');
@@ -111,6 +114,7 @@ export const getAdminSummary = () => api.get('/admin/summary');
 export const getAllUsuarios = () => api.get('/usuarios');
 export const cambiarRolUsuario = (numeroDocumento, rol) => api.put(`/usuarios/${numeroDocumento}/rol?rol=${rol}`);
 export const cambiarEstadoUsuario = (numeroDocumento, activo) => api.put(`/usuarios/${numeroDocumento}/estado?activo=${activo}`);
+export const deleteUsuario = (numeroDocumento) => api.delete(`/usuarios/${numeroDocumento}`);
 
 // Pedidos (admin)
 export const getAllPedidos = () => api.get('/pedidos');

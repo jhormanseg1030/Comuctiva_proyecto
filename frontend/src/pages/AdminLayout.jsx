@@ -26,8 +26,6 @@ const AdminLayout = () => {
               <Link to="/admin/usuarios" style={linkStyle}>Usuarios</Link>
               <Link to="/admin/pedidos" style={linkStyle}>Pedidos</Link>
               <Link to="/admin/productos" style={linkStyle}>Productos</Link>
-              <Link to="/admin/categorias" style={linkStyle}>Categorías</Link>
-              <Link to="/admin/promociones" style={linkStyle}>Promociones</Link>
               <Link to="/admin/moderacion" style={linkStyle}>Moderación</Link>
               <Link to="/admin/auditoria" style={linkStyle}>Auditoría</Link>
             </nav>

@@ -75,7 +75,7 @@ const ProductCard = ({ producto }) => {
           </small>
         </div>
         <div className="d-flex justify-content-between align-items-center">
-          <h5 className="mb-0 text-primary">
+          <h5 className="mb-0" style={{ color: '#000', fontWeight: '700' }}>
             ${producto.precio?.toFixed(2)}
           </h5>
           <Badge bg={producto.stock > 0 ? 'success' : 'danger'}>

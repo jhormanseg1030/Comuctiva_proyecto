@@ -23,27 +23,14 @@ const AdminPedidos = () => {
     fetchPedidos();
   }, []);
 
-  // Mapa para traducir etiquetas/alias de UI a los enums esperados por el backend
-  const estadoMap = {
-    ENVIADO: 'EN_CAMINO',
-    EN_CAMINO: 'EN_CAMINO',
-    ENTREGADO: 'ENTREGADO',
-    CANCELADO: 'CANCELADO',
-    PENDIENTE: 'PENDIENTE',
-    CONFIRMADO: 'CONFIRMADO'
-  };
-
   const handleCambiarEstado = async (id, estado) => {
-    const estadoBackend = estadoMap[estado] || estado;
-    if (!window.confirm(`Cambiar estado pedido ${id} a ${estadoBackend}?`)) return;
+    if (!window.confirm(`Cambiar estado pedido ${id} a ${estado}?`)) return;
     try {
-      await actualizarEstadoPedido(id, estadoBackend);
+      await actualizarEstadoPedido(id, estado);
       fetchPedidos();
     } catch (err) {
-      console.error('Error actualizando estado pedido:', err);
-      // Mostrar mensaje detallado del servidor si está disponible
-      const serverMsg = err?.response?.data?.message || err?.response?.data || err?.message || 'Error al actualizar estado';
-      alert(serverMsg);
+      console.error(err);
+      alert('Error al actualizar estado');
     }
   };
 
@@ -70,7 +57,7 @@ const AdminPedidos = () => {
               <td>{p.total}</td>
               <td>{p.estado}</td>
               <td>
-                <button className="btn btn-sm btn-outline-success me-2" onClick={() => handleCambiarEstado(p.id, 'EN_CAMINO')}>Marcar Enviado</button>
+                <button className="btn btn-sm btn-outline-success me-2" onClick={() => handleCambiarEstado(p.id, 'ENVIADO')}>Marcar Enviado</button>
                 <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}>Marcar Entregado</button>
                 <button className="btn btn-sm btn-outline-danger" onClick={() => handleCambiarEstado(p.id, 'CANCELADO')}>Cancelar</button>
               </td>
