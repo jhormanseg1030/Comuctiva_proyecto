@@ -1,0 +1,238 @@
+/* Reports.css - Estilos para el módulo de Reportes */
+
+.reports-container {
+  padding: 2rem 0;
+}
+
+.reports-header-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.reports-header-card .card-header {
+  background-color: #1a692b;
+  color: white;
+}
+
+.reports-logo {
+  height: 40px;
+  border-radius: 5px;
+  margin-right: 1rem;
+}
+
+.reports-title {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.report-type-label {
+  font-weight: bold;
+}
+
+.report-type-select {
+  border-color: #1a692b;
+}
+
+.report-type-select:focus {
+  border-color: #1a692b;
+  box-shadow: 0 0 0 0.2rem rgba(26, 105, 43, 0.25);
+}
+
+.report-actions {
+  text-align: right;
+}
+
+.report-actions .btn {
+  margin-left: 0.5rem;
+}
+
+.last-update {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.loading-container .spinner-border {
+  color: #1a692b;
+}
+
+.loading-text {
+  margin-top: 1rem;
+  color: #6c757d;
+}
+
+.report-preview-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.report-preview-header {
+  background-color: #f8f9fa;
+}
+
+.report-preview-title {
+  margin-bottom: 0;
+}
+
+.report-table thead {
+  background-color: #1a692b;
+  color: white;
+}
+
+.report-table tbody tr:hover {
+  background-color: #f5faf5;
+}
+
+.report-empty-state {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.report-empty-state h4 {
+  color: #6c757d;
+}
+
+.report-footer {
+  text-align: center;
+  margin-top: 2rem;
+  color: #6c757d;
+}
+
+.report-footer small {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* Estilos para el reporte consolidado */
+.consolidated-summary-card {
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.consolidated-summary-card h5 {
+  color: #6c757d;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.consolidated-summary-card h2 {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.consolidated-card-success {
+  border: 2px solid #28a745;
+}
+
+.consolidated-card-success h5 {
+  color: #28a745;
+}
+
+.consolidated-card-success h2 {
+  color: #28a745;
+}
+
+.consolidated-card-info {
+  border: 2px solid #17a2b8;
+}
+
+.consolidated-card-info h5 {
+  color: #17a2b8;
+}
+
+.consolidated-card-info h2 {
+  color: #17a2b8;
+}
+
+.consolidated-detail-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.consolidated-detail-header {
+  background-color: #1a692b;
+  color: white;
+}
+
+.consolidated-detail-header h5 {
+  margin-bottom: 0;
+}
+
+.consolidated-detail-card .card-body {
+  padding: 0;
+}
+
+.consolidated-detail-card .table {
+  margin-bottom: 0;
+}
+
+/* Badges de estado */
+.badge.bg-success {
+  background-color: #28a745 !important;
+}
+
+.badge.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.badge.bg-info {
+  background-color: #17a2b8 !important;
+}
+
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .reports-title h3 {
+    font-size: 1.5rem;
+  }
+
+  .report-actions {
+    text-align: left;
+    margin-top: 1rem;
+  }
+
+  .report-actions .btn {
+    margin-left: 0;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .consolidated-summary-card h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.report-preview-card,
+.consolidated-summary-card,
+.consolidated-detail-card {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Truncado de texto */
+.text-truncate-custom {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
