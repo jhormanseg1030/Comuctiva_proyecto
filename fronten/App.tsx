@@ -9,7 +9,7 @@ import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import AccountScreen from './src/screens/AccountScreen';
 import CreateProductScreen from './src/screens/CreateProductScreen';
-import UsuarioMenuScreen from './src/screens/UsuarioMenuScreen';
+import UsuarioMenuScreen from './src/screens/UsuarioScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -98,7 +98,27 @@ export default function App() {
           name="UsuarioMenuScreen"
           component={UsuarioMenuScreen}
           options={{
-            title: 'Menú de Usuario',
+            title: 'Perfil',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="MisProductos"
+          component={require('./src/screens/MisProductosScreen').default}
+          options={{
+            title: 'Mis Productos',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="EditarProducto"
+          component={require('./src/screens/EditarProductoScreen').default}
+          options={{
+            title: 'Editar Producto',
             headerStyle: { backgroundColor: '#22c55e' },
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: 'bold' },
