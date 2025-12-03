@@ -8,6 +8,7 @@ import {
   Alert,
   SafeAreaView,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -95,6 +96,34 @@ const cartStyles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loginButton: {
+    backgroundColor: '#374151',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  registerButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 10,
+  },
+  registerButtonText: {
+    color: '#374151',
+    fontSize: 14,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
   itemsList: {
     flex: 1,
@@ -250,6 +279,78 @@ const cartStyles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  // Estilos para modales
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+    minWidth: 300,
+  },
+  modalIcon: {
+    marginBottom: 10,
+  },
+  modalIconText: {
+    fontSize: 50,
+    textAlign: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#ef4444',
+  },
+  modalConfirmText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
 });
 
 interface CartItem {
@@ -261,9 +362,15 @@ interface CartItem {
   descripcion?: string;
 }
 
-const CartScreen = ({ navigation }: any) => {
+const CartScreen = ({ navigation, route }: any) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<any>(null);
+  
+  // Obtener parámetros de navegación para saber si está logueado
+  const isLoggedIn = route?.params?.isLoggedIn || false;
 
   useEffect(() => {
     loadCartItems();
@@ -294,41 +401,30 @@ const CartScreen = ({ navigation }: any) => {
     await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
   };
 
-  const removeCartItem = async (id: number) => {
-    Alert.alert(
-      'Eliminar producto',
-      '¿Estás seguro de que quieres eliminar este producto del carrito?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            const updatedCart = cartItems.filter(item => item.id !== id);
-            setCartItems(updatedCart);
-            await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
-          },
-        },
-      ]
-    );
+  const removeCartItem = (id: number) => {
+    setItemToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (itemToDelete) {
+      const updatedCart = cartItems.filter(item => item.id !== itemToDelete);
+      setCartItems(updatedCart);
+      await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
+      setItemToDelete(null);
+    }
+    setShowDeleteDialog(false);
   };
 
   const clearCart = () => {
-    Alert.alert(
-      'Vaciar carrito',
-      '¿Estás seguro de que quieres vaciar todo el carrito?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Vaciar',
-          style: 'destructive',
-          onPress: async () => {
-            setCartItems([]);
-            await AsyncStorage.removeItem('cart');
-          },
-        },
-      ]
-    );
+    setItemToDelete('all');
+    setShowDeleteDialog(true);
+  };
+
+  const confirmClearCart = async () => {
+    setCartItems([]);
+    await AsyncStorage.removeItem('cart');
+    setShowDeleteDialog(false);
   };
 
   const calculateTotal = () => {
@@ -341,24 +437,9 @@ const CartScreen = ({ navigation }: any) => {
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
-      Alert.alert('Carrito vacío', 'Agrega productos al carrito antes de proceder al pago.');
       return;
     }
-
-    Alert.alert(
-      'Proceder al pago',
-      `Total: $${calculateTotal().toLocaleString()}\n¿Deseas continuar con el pago?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Continuar',
-          onPress: () => {
-            // Aquí se implementará la lógica de pago
-            Alert.alert('En desarrollo', 'La funcionalidad de pago está en desarrollo.');
-          },
-        },
-      ]
-    );
+    navigation.navigate('CheckoutScreen', { cartItems, total: calculateTotal() });
   };
 
   const renderCartItem = (item: CartItem) => (
@@ -405,6 +486,51 @@ const CartScreen = ({ navigation }: any) => {
     </View>
   );
 
+  const renderDeleteDialog = () => (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={showDeleteDialog}
+      onRequestClose={() => setShowDeleteDialog(false)}
+    >
+      <View style={cartStyles.modalOverlay}>
+        <View style={cartStyles.modalContent}>
+          <View style={cartStyles.modalIcon}>
+            <Text style={cartStyles.modalIconText}>🗑️</Text>
+          </View>
+          
+          <Text style={cartStyles.modalTitle}>
+            {itemToDelete === 'all' ? 'Vaciar carrito' : 'Eliminar producto'}
+          </Text>
+          <Text style={cartStyles.modalMessage}>
+            {itemToDelete === 'all' 
+              ? '¿Estás seguro de que quieres vaciar todo el carrito?'
+              : '¿Estás seguro de que quieres eliminar este producto del carrito?'
+            }
+          </Text>
+
+          <View style={cartStyles.modalButtons}>
+            <TouchableOpacity 
+              style={cartStyles.modalCancelButton}
+              onPress={() => setShowDeleteDialog(false)}
+            >
+              <Text style={cartStyles.modalCancelText}>CANCELAR</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={cartStyles.modalConfirmButton}
+              onPress={itemToDelete === 'all' ? confirmClearCart : confirmDelete}
+            >
+              <Text style={cartStyles.modalConfirmText}>
+                {itemToDelete === 'all' ? 'VACIAR' : 'ELIMINAR'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={cartStyles.container}>
       {/* Header */}
@@ -429,7 +555,27 @@ const CartScreen = ({ navigation }: any) => {
       </View>
 
       {/* Content */}
-      {cartItems.length === 0 ? (
+      {!isLoggedIn ? (
+        <View style={cartStyles.emptyContainer}>
+          <Text style={cartStyles.emptyIcon}>🛒</Text>
+          <Text style={cartStyles.emptyTitle}>Tu Carro está vacío</Text>
+          <Text style={cartStyles.emptyMessage}>
+            Inicia sesión para ver los productos que habías guardado en tu Carro.
+          </Text>
+          <TouchableOpacity
+            style={cartStyles.loginButton}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={cartStyles.loginButtonText}>Iniciar sesión</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={cartStyles.registerButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={cartStyles.registerButtonText}>¿No tienes cuenta? Regístrate</Text>
+          </TouchableOpacity>
+        </View>
+      ) : cartItems.length === 0 ? (
         <View style={cartStyles.emptyContainer}>
           <Text style={cartStyles.emptyIcon}>🛒</Text>
           <Text style={cartStyles.emptyTitle}>Tu carrito está vacío</Text>
@@ -463,11 +609,6 @@ const CartScreen = ({ navigation }: any) => {
               <Text style={cartStyles.summaryValue}>${calculateTotal().toLocaleString()}</Text>
             </View>
             
-            <View style={cartStyles.summaryRow}>
-              <Text style={cartStyles.summaryLabel}>Envío:</Text>
-              <Text style={cartStyles.summaryValue}>Gratis</Text>
-            </View>
-            
             <View style={cartStyles.summaryDivider} />
             
             <View style={cartStyles.summaryRow}>
@@ -484,6 +625,8 @@ const CartScreen = ({ navigation }: any) => {
           </View>
         </>
       )}
+      
+      {renderDeleteDialog()}
     </SafeAreaView>
   );
 };
