@@ -100,6 +100,9 @@ export default function App() {
           component={CartScreen}
           options={{
             headerShown: false
+          }}
+        />
+        <Stack.Screen
           name="UsuarioMenuScreen"
           component={UsuarioMenuScreen}
           options={{
