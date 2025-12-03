@@ -35,6 +35,7 @@ public class DetallePedidoDTO {
             this.pedido = new HashMap<>();
             this.pedido.put("id", detalle.getPedido().getId());
             this.pedido.put("fechaPedido", detalle.getPedido().getFechaPedido().toString());
+            this.pedido.put("estado", detalle.getPedido().getEstado().toString());
             this.pedido.put("compradorNombre", detalle.getPedido().getComprador().getNombre() + " " + 
                     detalle.getPedido().getComprador().getApellido());
         }
