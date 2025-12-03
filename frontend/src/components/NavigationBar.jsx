@@ -46,8 +46,8 @@ const NavigationBar = () => {
                 🛒 Carrito
                 {getCartCount() > 0 && (
                   <Badge 
+                    bg="success"
                     style={{ 
-                      backgroundColor: '#18692bff',
                       position: 'absolute',
                       top: '0',
                       right: '-10px'
