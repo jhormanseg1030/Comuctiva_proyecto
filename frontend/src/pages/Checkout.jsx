@@ -210,7 +210,7 @@ const Checkout = () => {
               <hr />
               <div className="d-flex justify-content-between mb-3">
                 <h5>Total:</h5>
-                <h5 className="text-primary">${total.toFixed(2)}</h5>
+                <h5 style={{ color: '#1e7e34', fontWeight: '700' }}>${total.toFixed(2)}</h5>
               </div>
               <Alert variant="info" className="mb-0">
                 <small>
