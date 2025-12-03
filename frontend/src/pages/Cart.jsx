@@ -106,13 +106,14 @@ const Cart = () => {
               <hr />
               <div className="d-flex justify-content-between mb-3">
                 <h5>Total estimado:</h5>
-                <h5 className="text-primary">${total.toFixed(2)}</h5>
+                <h5 style={{ color: '#1e7e34', fontWeight: '700' }}>${total.toFixed(2)}</h5>
               </div>
               <Button 
-                variant="primary" 
+                variant="success" 
                 size="lg" 
                 className="w-100"
                 onClick={handleCheckout}
+                style={{ backgroundColor: '#1e7e34', borderColor: '#1e7e34' }}
               >
                 Proceder al Pago
               </Button>
