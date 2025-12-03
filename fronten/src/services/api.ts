@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://172.16.103.228:8080/api'; // <-- Reemplaza por tu IP local
+const API_URL = 'http://192.168.1.6:8080/api'; // <-- Reemplaza por tu IP local
 // Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
@@ -64,8 +64,17 @@ export const getFullUrl = (path?: string | null) => {
   if (!path) return '';
   // Si path es URL absoluta y contiene localhost/127.0.0.1, en Android emulador reemplazar por 10.0.2.2
   if (path.startsWith('http://') || path.startsWith('https://')) {
-    if (Platform.OS === 'android' && /localhost|127\.0\.0\.1/.test(path)) {
-      return path.replace(/localhost|127\.0\.0\.1/, '10.0.2.2');
+    try {
+      const u = new URL(path);
+      // If the returned URL uses localhost/127.0.0.1, replace host+port with our API_BASE_HOST
+      if (/localhost|127\.0\.0\.1/.test(u.hostname)) {
+        // API_BASE_HOST already contains protocol and optional port
+        // preserve the pathname and search from the original URL
+        return `${API_BASE_HOST}${u.pathname}${u.search || ''}`;
+      }
+    } catch (e) {
+      // if URL parsing fails, fall back to returning original path
+      return path;
     }
     return path;
   }
@@ -89,28 +98,32 @@ export const userService = {
 };
 
 export const categoryService = {
-  getAll: () => api.get('/categories'),
-  getById: (id: number) => api.get(`/categories/${id}`),
-  create: (data: any) => api.post('/categories', data),
-  update: (id: number, data: any) => api.put(`/categories/${id}`, data),
-  delete: (id: number) => api.delete(`/categories/${id}`),
+  getAll: () => api.get('/categorias'),
+  getById: (id: number) => api.get(`/categorias/${id}`),
+  create: (data: any) => api.post('/categorias', data),
+  update: (id: number, data: any) => api.put(`/categorias/${id}`, data),
+  delete: (id: number) => api.delete(`/categorias/${id}`),
 };
 
 export const subcategoryService = {
-  getAll: () => api.get('/subcategories'),
-  getByCategory: (categoryId: number) => api.get(`/subcategories/category/${categoryId}`),
-  getById: (id: number) => api.get(`/subcategories/${id}`),
-  create: (data: any) => api.post('/subcategories', data),
-  update: (id: number, data: any) => api.put(`/subcategories/${id}`, data),
-  delete: (id: number) => api.delete(`/subcategories/${id}`),
+  getAll: () => api.get('/subcategorias'),
+  getByCategory: (categoryId: number) => api.get(`/subcategorias/categoria/${categoryId}`),
+  getById: (id: number) => api.get(`/subcategorias/${id}`),
+  create: (data: any) => api.post('/subcategorias', data),
+  update: (id: number, data: any) => api.put(`/subcategorias/${id}`, data),
+  delete: (id: number) => api.delete(`/subcategorias/${id}`),
 };
 
 export const productService = {
   getAll: () => api.get('/productos'),
-  getByCategory: (categoryId: number) => api.get(`/productos/category/${categoryId}`),
-  getBySubcategory: (subcategoryId: number) => api.get(`/productos/subcategory/${subcategoryId}`),
+  getByCategory: (categoryId: number) => api.get(`/productos/categoria/${categoryId}`),
+  getBySubcategory: (subcategoryId: number) => api.get(`/productos/subcategoria/${subcategoryId}`),
   getById: (id: number) => api.get(`/productos/${id}`),
   create: (data: any) => api.post('/productos', data),
+  // Create product with image (multipart/form-data)
+  createWithImage: (formData: FormData) => api.post('/productos/con-imagen', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   update: (id: number, data: any) => api.put(`/productos/${id}`, data),
   delete: (id: number) => api.delete(`/products/${id}`),
 };

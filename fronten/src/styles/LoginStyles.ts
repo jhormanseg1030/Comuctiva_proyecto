@@ -8,7 +8,7 @@ export const loginStyles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     padding: Spacing.lg,
   },
   
