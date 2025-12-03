@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useIsFocused } from '@react-navigation/native';
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image, TouchableWithoutFeedback, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { productService, categoryService, getFullUrl, authService } from '../services/api';
 import ComuctivaLogo from '../components/ComuctivaLogo';
@@ -29,6 +29,9 @@ const HomeScreen = ({ navigation, route }: any) => {
   const [favorites, setFavorites] = useState<Producto[]>([]);
   const [showFavorites, setShowFavorites] = useState<boolean>(false);
   const [showUserMenu, setShowUserMenu] = useState<boolean>(false);
+  const [showProductAddedDialog, setShowProductAddedDialog] = useState<boolean>(false);
+  const [addedProductName, setAddedProductName] = useState<string>('');
+  const [showLoginDialog, setShowLoginDialog] = useState<boolean>(false);
   const isFocused = useIsFocused();
   
   // Obtener parámetros de navegación para saber si está logueado
@@ -135,6 +138,34 @@ const HomeScreen = ({ navigation, route }: any) => {
   const goToFavorites = () => {
     // Mostrar la vista de favoritos dentro del HomeScreen
     setShowFavorites(true);
+  };
+
+  const addToCart = async (product: Producto) => {
+    if (!isLoggedIn) {
+      setShowLoginDialog(true);
+      return;
+    }
+
+    try {
+      const savedCart = await AsyncStorage.getItem('cart');
+      let cart = savedCart ? JSON.parse(savedCart) : [];
+      
+      const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+      
+      if (existingItemIndex >= 0) {
+        cart[existingItemIndex].quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+      
+      await AsyncStorage.setItem('cart', JSON.stringify(cart));
+      
+      // Mostrar dialog de confirmación
+      setAddedProductName(product.nombre);
+      setShowProductAddedDialog(true);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
   const loadInitialData = async () => {
@@ -249,11 +280,88 @@ const HomeScreen = ({ navigation, route }: any) => {
       <View style={styles.modernCardContent}>
         <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
         <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
-        <TouchableOpacity style={styles.addToCartButton}>
+        <TouchableOpacity 
+          style={styles.addToCartButton}
+          onPress={() => addToCart(item)}
+        >
           <Text style={styles.addToCartText}>Agregar al carrito</Text>
         </TouchableOpacity>
       </View>
     </View>
+  );
+
+  const renderLoginDialog = () => (
+    <Modal
+      visible={showLoginDialog}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setShowLoginDialog(false)}
+    >
+      <View style={styles.dialogOverlay}>
+        <View style={styles.loginDialogContainer}>
+          <View style={styles.loginDialogHeader}>
+            <Text style={styles.loginDialogIcon}>🔒</Text>
+            <Text style={styles.loginDialogTitle}>Iniciar sesión requerida</Text>
+          </View>
+          
+          <View style={styles.loginDialogContent}>
+            <Text style={styles.loginDialogMessage}>
+              Para agregar productos al carrito inicia sesión
+            </Text>
+          </View>
+
+          <View style={styles.loginDialogButtons}>
+            <TouchableOpacity
+              style={styles.loginDialogCancelButton}
+              onPress={() => setShowLoginDialog(false)}
+            >
+              <Text style={styles.loginDialogCancelText}>CANCELAR</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.loginDialogLoginButton}
+              onPress={() => {
+                setShowLoginDialog(false);
+                navigation.navigate('Login');
+              }}
+            >
+              <Text style={styles.loginDialogLoginText}>INICIAR SESIÓN</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderProductAddedDialog = () => (
+    <Modal
+      visible={showProductAddedDialog}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setShowProductAddedDialog(false)}
+    >
+      <View style={styles.dialogOverlay}>
+        <View style={styles.productAddedDialogContainer}>
+          <View style={styles.productAddedDialogHeader}>
+            <Text style={styles.productAddedDialogIcon}>🛒</Text>
+            <Text style={styles.productAddedDialogTitle}>Producto agregado</Text>
+          </View>
+          
+          <View style={styles.productAddedDialogContent}>
+            <Text style={styles.productAddedDialogMessage}>
+              {addedProductName} se agregó al carrito
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.productAddedDialogButton}
+            onPress={() => setShowProductAddedDialog(false)}
+          >
+            <Text style={styles.productAddedDialogButtonText}>ENTENDIDO</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 
   return (
@@ -367,7 +475,10 @@ const HomeScreen = ({ navigation, route }: any) => {
                     <Text style={{ fontSize: 14, fontWeight: '600' }} numberOfLines={2}>{item.nombre}</Text>
                     <Text style={{ color: '#22c55e', fontWeight: '700', marginTop: 6 }}>${item.precio.toLocaleString()}</Text>
                     <View style={{ flexDirection: 'row', marginTop: 10, gap: 8 }}>
-                      <TouchableOpacity style={styles.addToCartButton}>
+                      <TouchableOpacity 
+                        style={styles.addToCartButton}
+                        onPress={() => addToCart(item)}
+                      >
                         <Text style={styles.addToCartText}>Agregar al carrito</Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={[styles.addToCartButton, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e11d48' }]} onPress={() => removeFavoriteLocal(item.id)}>
@@ -420,7 +531,7 @@ const HomeScreen = ({ navigation, route }: any) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigation.navigate('Carrito')}
+          onPress={() => navigation.navigate('Cart', { isLoggedIn })}
         >
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navLabel}>Carrito</Text>
@@ -445,6 +556,9 @@ const HomeScreen = ({ navigation, route }: any) => {
           </TouchableOpacity>
         )}
       </View>
+      
+      {renderLoginDialog()}
+      {renderProductAddedDialog()}
     </View>
   );
 };
@@ -911,6 +1025,151 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 2,
     elevation: 2,
+  },
+  // Estilos para dialogs
+  dialogOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  // Login Dialog Styles
+  loginDialogContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    margin: 20,
+    width: '85%',
+    maxWidth: 350,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  loginDialogHeader: {
+    alignItems: 'center',
+    paddingTop: 25,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#fee2e2',
+  },
+  loginDialogIcon: {
+    fontSize: 50,
+    marginBottom: 10,
+  },
+  loginDialogTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#374151',
+    textAlign: 'center',
+  },
+  loginDialogContent: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loginDialogMessage: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontWeight: '500',
+  },
+  loginDialogButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    gap: 10,
+  },
+  loginDialogCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  loginDialogCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  loginDialogLoginButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#3b82f6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  loginDialogLoginText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  // Product Added Dialog Styles
+  productAddedDialogContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    margin: 20,
+    width: '85%',
+    maxWidth: 350,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  productAddedDialogHeader: {
+    alignItems: 'center',
+    paddingTop: 25,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0fdf4',
+  },
+  productAddedDialogIcon: {
+    fontSize: 50,
+    marginBottom: 10,
+  },
+  productAddedDialogTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#16a34a',
+    textAlign: 'center',
+  },
+  productAddedDialogContent: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  productAddedDialogMessage: {
+    fontSize: 16,
+    color: '#374151',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontWeight: '500',
+  },
+  productAddedDialogButton: {
+    backgroundColor: '#16a34a',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  productAddedDialogButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
 
