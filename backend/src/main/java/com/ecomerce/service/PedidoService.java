@@ -172,8 +172,8 @@ public class PedidoService {
         return detallePedidoRepository.findByVendedorNumeroDocumento(numeroDocumento);
     }
 
-    // Actualizar estado del pedido
-    public Pedido actualizarEstadoPedido(Long pedidoId, String nuevoEstado) {
+    // Actualizar estado del pedido (devuelve DTO construido dentro de la transacción)
+    public PedidoDTO actualizarEstadoPedido(Long pedidoId, String nuevoEstado) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
@@ -186,7 +186,10 @@ public class PedidoService {
         }
 
         pedido.setEstado(estadoPedido);
-        return pedidoRepository.save(pedido);
+        Pedido saved = pedidoRepository.save(pedido);
+
+        // Construir y devolver DTO mientras la sesión/transaction está activa
+        return new PedidoDTO(saved);
     }
 
     // Cancelar pedido

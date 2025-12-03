@@ -21,10 +21,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Usuario usuario = usuarioRepository.findById(numeroDocumento)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + numeroDocumento));
 
-        if (Boolean.TRUE.equals(usuario.getDeleted()) || Boolean.FALSE.equals(usuario.getActivo())) {
-            throw new UsernameNotFoundException("Usuario no encontrado: " + numeroDocumento);
-        }
-
         return UserDetailsImpl.build(usuario);
     }
 }

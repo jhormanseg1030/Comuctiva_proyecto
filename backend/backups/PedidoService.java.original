@@ -1,0 +1,20 @@
+// Backup of PedidoService.java before making changes
+package com.ecomerce.service;
+
+import com.ecomerce.model.*;
+import com.ecomerce.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+import com.ecomerce.dto.PedidoDTO;
+import com.ecomerce.dto.DetallePedidoDTO;
+
+@Service
+@Transactional
+public class PedidoService {
+    // original content saved
+}

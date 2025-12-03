@@ -9,6 +9,7 @@ import com.ecomerce.service.ComentarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -272,12 +273,39 @@ public class ProductoController {
         }
     }
 
+    @PutMapping("/{id}/imagen/archive")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<?> archiveImagen(@PathVariable Long id, Authentication authentication) {
+        try {
+            String admin = authentication != null ? authentication.getName() : "system";
+            Producto producto = productoService.archiveImagenProducto(id, admin);
+            return ResponseEntity.ok(new ProductoDTO(producto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/imagen/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<?> restoreImagen(@PathVariable Long id, Authentication authentication) {
+        try {
+            String admin = authentication != null ? authentication.getName() : "system";
+            Producto producto = productoService.restoreImagenProducto(id, admin);
+            return ResponseEntity.ok(new ProductoDTO(producto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> cambiarEstado(@PathVariable Long id, @RequestParam Boolean activo) {
         try {
             Producto producto = productoService.cambiarEstado(id, activo);
-            return ResponseEntity.ok(producto);
+            return ResponseEntity.ok(new ProductoDTO(producto));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
