@@ -134,8 +134,8 @@ public class PedidoController {
             @PathVariable Long pedidoId,
             @RequestParam String estado) {
         try {
-            Pedido pedido = pedidoService.actualizarEstadoPedido(pedidoId, estado);
-            return ResponseEntity.ok(new PedidoDTO(pedido));
+                PedidoDTO pedidoDTO = pedidoService.actualizarEstadoPedido(pedidoId, estado);
+                return ResponseEntity.ok(pedidoDTO);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: " + e.getMessage()));

@@ -63,16 +63,6 @@ public class Producto {
     @Column(name = "imagen_url")
     private String imagenUrl;
 
-    // Soft-delete metadata for the product image
-    @Column(name = "imagen_deleted")
-    private Boolean imagenDeleted = false;
-
-    @Column(name = "imagen_deleted_at")
-    private java.time.LocalDateTime imagenDeletedAt;
-
-    @Column(name = "imagen_deleted_by")
-    private String imagenDeletedBy;
-
     // Explicit getters (in case Lombok is not processed)
     public Long getId() { return this.id; }
     public String getNombre() { return this.nombre; }
@@ -87,16 +77,8 @@ public class Producto {
     public Usuario getUsuario() { return this.usuario; }
     public String getImagenUrl() { return this.imagenUrl; }
 
-    public Boolean getImagenDeleted() { return this.imagenDeleted; }
-    public java.time.LocalDateTime getImagenDeletedAt() { return this.imagenDeletedAt; }
-    public String getImagenDeletedBy() { return this.imagenDeletedBy; }
-
     // Basic setters used by services
     public void setStock(Integer stock) { this.stock = stock; }
     public void setPrecio(java.math.BigDecimal precio) { this.precio = precio; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
-    public void setImagenDeleted(Boolean imagenDeleted) { this.imagenDeleted = imagenDeleted; }
-    public void setImagenDeletedAt(java.time.LocalDateTime imagenDeletedAt) { this.imagenDeletedAt = imagenDeletedAt; }
-    public void setImagenDeletedBy(String imagenDeletedBy) { this.imagenDeletedBy = imagenDeletedBy; }
 }
