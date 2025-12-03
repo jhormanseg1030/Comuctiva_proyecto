@@ -6,7 +6,14 @@ const ReviewCard = ({ comentario }) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <span key={i} className={i <= calificacion ? 'text-warning' : 'text-muted'}>
+        <span 
+          key={i} 
+          style={{ 
+            color: i <= calificacion ? '#FFA41C' : '#dee2e6',
+            fontSize: '1.1rem',
+            marginRight: '2px'
+          }}
+        >
           ★
         </span>
       );
@@ -56,20 +63,72 @@ const ReviewCard = ({ comentario }) => {
   const content = comentario.contenido || comentario.comentario || '';
 
   return (
-    <ListGroup.Item>
+    <div style={{ padding: '20px 0' }}>
       <div className="d-flex justify-content-between align-items-start mb-2">
-        <div>
-          <h6 className="mb-1">{authorName}</h6>
-          <div className="star-rating">
-            {renderStars(comentario.calificacion)}
+        <div style={{ flex: 1 }}>
+          <div className="d-flex align-items-center mb-2">
+            <div 
+              style={{ 
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '50%', 
+                backgroundColor: '#232F3E',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: '600',
+                fontSize: '1rem',
+                marginRight: '12px'
+              }}
+            >
+              {authorName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h6 style={{ 
+                margin: 0, 
+                fontSize: '0.95rem', 
+                fontWeight: '700',
+                color: '#0f1111'
+              }}>
+                {authorName}
+              </h6>
+            </div>
+          </div>
+          <div className="d-flex align-items-center mb-2">
+            <div className="star-rating me-2">
+              {renderStars(comentario.calificacion)}
+            </div>
+            <span style={{ 
+              fontSize: '0.85rem', 
+              color: '#565959',
+              fontWeight: '700'
+            }}>
+              {comentario.calificacion === 5 ? 'Excelente' : 
+               comentario.calificacion === 4 ? 'Muy bueno' :
+               comentario.calificacion === 3 ? 'Bueno' :
+               comentario.calificacion === 2 ? 'Regular' : 'Malo'}
+            </span>
           </div>
         </div>
-        <small className="text-muted">
+        <small style={{ 
+          color: '#565959', 
+          fontSize: '0.85rem',
+          whiteSpace: 'nowrap',
+          marginLeft: '15px'
+        }}>
           {formatDate(dateValue)}
         </small>
       </div>
-      <p className="mb-0">{content}</p>
-    </ListGroup.Item>
+      <p style={{ 
+        margin: 0, 
+        fontSize: '0.95rem', 
+        lineHeight: '1.5',
+        color: '#0f1111'
+      }}>
+        {content}
+      </p>
+    </div>
   );
 };
 

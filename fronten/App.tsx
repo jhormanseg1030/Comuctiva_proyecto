@@ -9,6 +9,7 @@ import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import AccountScreen from './src/screens/AccountScreen';
 import CreateProductScreen from './src/screens/CreateProductScreen';
+import CartScreen from './src/screens/CartScreen';
 import UsuarioMenuScreen from './src/screens/UsuarioScreen';
 
 const Stack = createNativeStackNavigator();
@@ -92,6 +93,13 @@ export default function App() {
             headerStyle: { backgroundColor: '#22c55e' },
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="Cart"
+          component={CartScreen}
+          options={{
+            headerShown: false
           }}
         />
         <Stack.Screen

@@ -22,9 +22,6 @@ public class ProductoDTO {
     private Boolean activo;
     private LocalDateTime fechaPublicacion;
     private String imagenUrl;
-    private Boolean imagenDeleted;
-    private java.time.LocalDateTime imagenDeletedAt;
-    private String imagenDeletedBy;
     
     // Información de la categoría
     private Long categoriaId;
@@ -51,9 +48,6 @@ public class ProductoDTO {
         this.activo = producto.getActivo();
         this.fechaPublicacion = producto.getFechaPublicacion();
         this.imagenUrl = producto.getImagenUrl();
-        this.imagenDeleted = producto.getImagenDeleted();
-        this.imagenDeletedAt = producto.getImagenDeletedAt();
-        this.imagenDeletedBy = producto.getImagenDeletedBy();
         
         if (producto.getCategoria() != null) {
             this.categoriaId = producto.getCategoria().getId();
