@@ -279,36 +279,6 @@ const HomeScreen = ({ navigation, route }: any) => {
                 <Text style={styles.subtitleLoggedIn}>¡Bienvenido de vuelta!</Text>
               </View>
             </View>
-              <View style={styles.userInfoWrapper}>
-                <View style={styles.userInfo}>
-                  <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8} onPress={() => setShowUserMenu(s => !s)}>
-                    <Text style={styles.userText} numberOfLines={1} ellipsizeMode="tail">Usuario: {userName} ▾</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {showUserMenu && (
-                  <View style={styles.userMenu} pointerEvents="box-none">
-                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); navigation.navigate('Account'); }}>
-                      <Text style={styles.userMenuText}>Mi Cuenta</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); Alert.alert('Mis Pedidos', 'Función no implementada aún'); }}>
-                      <Text style={styles.userMenuText}>Mis Pedidos</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); navigation.navigate('CreateProduct'); }}>
-                      <Text style={styles.userMenuText}>Publicar Producto</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); Alert.alert('Mis Productos', 'Función no implementada aún'); }}>
-                      <Text style={styles.userMenuText}>Mis Productos</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.userMenuItem} onPress={() => { setShowUserMenu(false); Alert.alert('Mis Ventas', 'Función no implementada aún'); }}>
-                      <Text style={styles.userMenuText}>Mis Ventas</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.userMenuItem} onPress={async () => { setShowUserMenu(false); await authService.logout(); navigation.replace('Home'); }}>
-                      <Text style={[styles.userMenuText, { color: '#e11d48', fontWeight: '700' }]}>Cerrar Sesión</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
           </>
         ) : (
           // Vista cuando el usuario NO está logueado
@@ -432,24 +402,48 @@ const HomeScreen = ({ navigation, route }: any) => {
       )}
       </View>
       
-      {/* Barra de navegación inferior */}
+      {/* Barra de navegación inferior y menú de usuario */}
       <View style={styles.bottomNavigation}>
-        <TouchableOpacity style={[styles.navItem, !showFavorites ? styles.navItemActive : undefined]} onPress={() => setShowFavorites(false)}>
-          <Text style={[styles.navIcon, !showFavorites ? styles.navIconActive : undefined]}>🏠</Text>
-          <Text style={[styles.navLabel, !showFavorites ? styles.navLabelActive : undefined]}>Inicio</Text>
+        <TouchableOpacity
+          style={[styles.navItem, !showFavorites && styles.navItemActive]}
+          onPress={() => setShowFavorites(false)}
+        >
+          <Text style={[styles.navIcon, !showFavorites && styles.navIconActive]}>🏠</Text>
+          <Text style={[styles.navLabel, !showFavorites && styles.navLabelActive]}>Inicio</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.navItem, showFavorites ? styles.navItemActive : undefined]} onPress={() => setShowFavorites(true)}>
-          <Text style={[styles.navIcon, showFavorites ? styles.navIconActive : undefined]}>❤️</Text>
-          <Text style={[styles.navLabel, showFavorites ? styles.navLabelActive : undefined]}>Favoritos</Text>
+        <TouchableOpacity
+          style={[styles.navItem, showFavorites && styles.navItemActive]}
+          onPress={() => setShowFavorites(true)}
+        >
+          <Text style={[styles.navIcon, showFavorites && styles.navIconActive]}>❤️</Text>
+          <Text style={[styles.navLabel, showFavorites && styles.navLabelActive]}>Favoritos</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Carrito')}
+        >
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navLabel}>Carrito</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Buscar')}
+        >
           <Text style={styles.navIcon}>🔍</Text>
           <Text style={styles.navLabel}>Buscar</Text>
         </TouchableOpacity>
+        {isLoggedIn && (
+          <TouchableOpacity
+            style={[styles.navItem, styles.navItemActive]}
+            onPress={() => navigation.navigate('UsuarioMenuScreen')}
+          >
+            <Image
+              source={require('../../assets/icon.png')}
+              style={{ width: 28, height: 28, borderRadius: 14, marginBottom: 4 }}
+            />
+            <Text style={[styles.navLabel, styles.navLabelActive]}>Usuario</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
