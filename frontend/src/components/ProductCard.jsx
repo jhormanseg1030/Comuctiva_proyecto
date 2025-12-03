@@ -64,8 +64,14 @@ const ProductCard = ({ producto }) => {
           <div className="star-rating">
             {renderStars(Math.round(producto.calificacionPromedio || 0))}
           </div>
-          <small className="text-muted">
-            ({producto.calificacionPromedio?.toFixed(1) || 0})
+          <small className="text-muted d-block">
+            {
+              (() => {
+                const avg = typeof producto.calificacionPromedio === 'number' ? producto.calificacionPromedio : (producto.calificacionPromedio ? Number(producto.calificacionPromedio) : 0);
+                const count = producto.totalComentarios || 0;
+                return `${avg.toFixed(1)} (${count})`;
+              })()
+            }
           </small>
         </div>
         <div className="d-flex justify-content-between align-items-center">

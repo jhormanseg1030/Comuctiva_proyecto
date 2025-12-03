@@ -15,4 +15,5 @@ public interface ComentarioRepository extends JpaRepository<Comentario, Long> {
     List<Comentario> findByProductoIdAndActivo(Long productoId, Boolean activo);
     List<Comentario> findByProductoIdOrderByFechaComentarioDesc(Long productoId);
     boolean existsByProductoAndUsuario(Producto producto, Usuario usuario);
+    int countByProductoIdAndActivo(Long productoId, Boolean activo);
 }

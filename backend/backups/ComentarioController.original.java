@@ -28,17 +28,15 @@ public class ComentarioController {
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> crearComentario(
-            @RequestBody ComentarioDTO comentarioDTO,
+            @RequestParam Long productoId,
+            @RequestParam String comentario,
+            @RequestParam Integer calificacion,
             Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            Long productoId = comentarioDTO.getProductoId();
-            String comentario = comentarioDTO.getComentario();
-            Integer calificacion = comentarioDTO.getCalificacion();
-
             Comentario nuevoComentario = comentarioService.crearComentario(
                     productoId, numeroDocumento, comentario, calificacion);
-
+            
             return ResponseEntity.status(HttpStatus.CREATED).body(new ComentarioDTO(nuevoComentario));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -53,8 +51,12 @@ public class ComentarioController {
     @GetMapping("/producto/{productoId}")
     public ResponseEntity<?> obtenerComentariosPorProducto(@PathVariable Long productoId) {
         try {
-            List<ComentarioDTO> comentariosDTO = comentarioService.obtenerComentariosPorProducto(productoId);
+            List<Comentario> comentarios = comentarioService.obtenerComentariosPorProducto(productoId);
             Double promedioCalificacion = comentarioService.calcularPromedioCalificacion(productoId);
+            
+            List<ComentarioDTO> comentariosDTO = comentarios.stream()
+                    .map(ComentarioDTO::new)
+                    .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
             response.put("comentarios", comentariosDTO);
@@ -74,7 +76,12 @@ public class ComentarioController {
     public ResponseEntity<?> obtenerMisComentarios(Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            List<ComentarioDTO> comentariosDTO = comentarioService.obtenerComentariosPorUsuario(numeroDocumento);
+            List<Comentario> comentarios = comentarioService.obtenerComentariosPorUsuario(numeroDocumento);
+            
+            List<ComentarioDTO> comentariosDTO = comentarios.stream()
+                    .map(ComentarioDTO::new)
+                    .collect(Collectors.toList());
+
             return ResponseEntity.ok(comentariosDTO);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

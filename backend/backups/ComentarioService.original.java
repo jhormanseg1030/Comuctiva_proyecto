@@ -1,6 +1,5 @@
 package com.ecomerce.service;
 
-import com.ecomerce.dto.ComentarioDTO;
 import com.ecomerce.model.Comentario;
 import com.ecomerce.model.Producto;
 import com.ecomerce.model.Usuario;
@@ -57,18 +56,16 @@ public class ComentarioService {
         return comentarioRepository.save(nuevoComentario);
     }
 
-    // Obtener comentarios de un producto (devuelve DTOs para evitar LazyInitialization)
+    // Obtener comentarios de un producto
     @Transactional(readOnly = true)
-    public List<ComentarioDTO> obtenerComentariosPorProducto(Long productoId) {
-        List<Comentario> comentarios = comentarioRepository.findByProductoIdAndActivo(productoId, true);
-        return comentarios.stream().map(ComentarioDTO::new).collect(java.util.stream.Collectors.toList());
+    public List<Comentario> obtenerComentariosPorProducto(Long productoId) {
+        return comentarioRepository.findByProductoIdAndActivo(productoId, true);
     }
 
     // Obtener comentarios de un usuario
     @Transactional(readOnly = true)
-    public List<ComentarioDTO> obtenerComentariosPorUsuario(String numeroDocumento) {
-        List<Comentario> comentarios = comentarioRepository.findByUsuarioNumeroDocumento(numeroDocumento);
-        return comentarios.stream().map(ComentarioDTO::new).collect(java.util.stream.Collectors.toList());
+    public List<Comentario> obtenerComentariosPorUsuario(String numeroDocumento) {
+        return comentarioRepository.findByUsuarioNumeroDocumento(numeroDocumento);
     }
 
     // Actualizar comentario
@@ -124,10 +121,5 @@ public class ComentarioService {
                 .sum();
 
         return suma / comentarios.size();
-    }
-
-    @Transactional(readOnly = true)
-    public int contarComentariosPorProducto(Long productoId) {
-        return comentarioRepository.countByProductoIdAndActivo(productoId, true);
     }
 }
