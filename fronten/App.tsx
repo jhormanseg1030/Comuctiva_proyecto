@@ -9,6 +9,7 @@ import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import AccountScreen from './src/screens/AccountScreen';
 import CreateProductScreen from './src/screens/CreateProductScreen';
+import UsuarioMenuScreen from './src/screens/UsuarioMenuScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -88,6 +89,16 @@ export default function App() {
           component={CreateProductScreen}
           options={{
             title: 'Publicar producto',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="UsuarioMenuScreen"
+          component={UsuarioMenuScreen}
+          options={{
+            title: 'Menú de Usuario',
             headerStyle: { backgroundColor: '#22c55e' },
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: 'bold' },
