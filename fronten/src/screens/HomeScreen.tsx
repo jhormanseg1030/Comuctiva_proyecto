@@ -123,6 +123,37 @@ const HomeScreen = ({ navigation, route }: any) => {
     }
   };
 
+  const addToCart = async (product: Producto) => {
+    try {
+      const savedCart = await AsyncStorage.getItem('cart');
+      let cart = savedCart ? JSON.parse(savedCart) : [];
+      
+      const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+      
+      if (existingItemIndex >= 0) {
+        // Si el producto ya existe, incrementa la cantidad
+        cart[existingItemIndex].cantidad += 1;
+      } else {
+        // Si no existe, lo agrega al carrito
+        const cartItem = {
+          id: product.id,
+          nombre: product.nombre,
+          precio: product.precio,
+          imagen: product.imagenUrl ? getFullUrl(product.imagenUrl) : '',
+          cantidad: 1,
+          descripcion: product.descripcion
+        };
+        cart.push(cartItem);
+      }
+      
+      await AsyncStorage.setItem('cart', JSON.stringify(cart));
+      Alert.alert('Producto agregado', `${product.nombre} se agregó al carrito`);
+    } catch (error) {
+      console.error('Error agregando al carrito:', error);
+      Alert.alert('Error', 'No se pudo agregar el producto al carrito');
+    }
+  };
+
   const clearFavoritesLocal = () => {
     // Clear only local state so favorites are not visible when logged out,
     // but keep them persisted for the user so they reappear after login.
@@ -249,7 +280,7 @@ const HomeScreen = ({ navigation, route }: any) => {
       <View style={styles.modernCardContent}>
         <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
         <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
-        <TouchableOpacity style={styles.addToCartButton}>
+        <TouchableOpacity style={styles.addToCartButton} onPress={() => addToCart(item)}>
           <Text style={styles.addToCartText}>Agregar al carrito</Text>
         </TouchableOpacity>
       </View>
@@ -367,7 +398,7 @@ const HomeScreen = ({ navigation, route }: any) => {
                     <Text style={{ fontSize: 14, fontWeight: '600' }} numberOfLines={2}>{item.nombre}</Text>
                     <Text style={{ color: '#22c55e', fontWeight: '700', marginTop: 6 }}>${item.precio.toLocaleString()}</Text>
                     <View style={{ flexDirection: 'row', marginTop: 10, gap: 8 }}>
-                      <TouchableOpacity style={styles.addToCartButton}>
+                      <TouchableOpacity style={styles.addToCartButton} onPress={() => addToCart(item)}>
                         <Text style={styles.addToCartText}>Agregar al carrito</Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={[styles.addToCartButton, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e11d48' }]} onPress={() => removeFavoriteLocal(item.id)}>
@@ -420,7 +451,7 @@ const HomeScreen = ({ navigation, route }: any) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigation.navigate('Carrito')}
+          onPress={() => navigation.navigate('Cart')}
         >
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navLabel}>Carrito</Text>
