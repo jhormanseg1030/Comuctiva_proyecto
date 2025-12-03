@@ -29,6 +29,7 @@ import AdminRoute from './components/AdminRoute';
 import AdminUsuarios from './pages/AdminUsuarios';
 import AdminPedidos from './pages/AdminPedidos';
 import AdminLayout from './pages/AdminLayout';
+import AdminAuditoria from './pages/AdminAuditoria';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -123,6 +124,7 @@ function AppContent() {
               <Route index element={<AdminDashboard/>} />
               <Route path="usuarios" element={<AdminUsuarios/>} />
               <Route path="pedidos" element={<AdminPedidos/>} />
+              <Route path="auditoria" element={<AdminAuditoria/>} />
             </Route>
             
             {/* Catch all */}

@@ -4,7 +4,7 @@ import { Colors, Typography, Spacing, Border, Shadows } from './GlobalStyles';
 export const loginStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ecfdf5',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -115,7 +115,7 @@ export const loginStyles = StyleSheet.create({
   
   // Formulario
   formContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#e6f7ed',
     borderRadius: Border.radius.xl,
     padding: Spacing.xl,
     ...Shadows.large,
@@ -155,7 +155,7 @@ export const loginStyles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   inputWrapperFocused: {
-    borderColor: Colors.primary,
+    borderColor: '#16a34a',
     borderWidth: Border.width.medium,
     backgroundColor: Colors.white,
   },
@@ -176,14 +176,14 @@ export const loginStyles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   loginButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#16a34a',
     borderRadius: Border.radius.lg,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
     ...Shadows.medium,
   },
   loginButtonPressed: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: '#15803d',
     transform: [{ scale: 0.98 }],
   },
   loginButtonDisabled: {

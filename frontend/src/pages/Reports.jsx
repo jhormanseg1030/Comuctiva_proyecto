@@ -7,10 +7,10 @@ import {
   getVentas,
   getProductos 
 } from '../services/api';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { exportConsolidatedToExcel, exportSingleReportToExcel } from '../utils/excelExport';
+import { exportConsolidatedToPDF, exportSingleReportToPDF } from '../utils/pdfExport';
 import logo from '../assets/images/logo.png';
+import '../styles/Reports.css';
 
 const Reports = () => {
   const { user } = useAuth();
@@ -173,168 +173,9 @@ const Reports = () => {
   const exportToExcel = () => {
     try {
       if (reportType === 'todos') {
-        const wb = XLSX.utils.book_new();
-        const resumen = reportData.resumen || reportData;
-        
-        // Hoja de resumen
-        const headerData = [
-          ['COMUCTIVA'],
-          ['Plataforma de Comercio Comunitario'],
-          ['Fecha: ' + new Date().toLocaleDateString('es-ES') + ' | Hora: ' + new Date().toLocaleTimeString('es-ES')],
-          [''],
-          ['Reporte de Resumen General'],
-          [''],
-          ['Metrica', 'Valor']
-        ];
-        
-        const bodyData = [
-          ['Total Productos', resumen.productos || 0],
-          ['Total Pedidos', resumen.pedidos || 0],
-          ['Total Ventas', resumen.ventas || 0],
-          ['Ingresos por Ventas', '$' + (resumen.totalVentas || 0).toFixed(2)],
-          ['Total en Compras', '$' + (resumen.totalCompras || 0).toFixed(2)]
-        ];
-        
-        const footerData = [
-          [''],
-          ['© 2025 COMUCTIVA - Todos los derechos reservados'],
-          ['Documento generado automaticamente']
-        ];
-        
-        const wsResumen = XLSX.utils.aoa_to_sheet([...headerData, ...bodyData, ...footerData]);
-        wsResumen['!cols'] = [{ wch: 30 }, { wch: 20 }];
-        XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-        
-        // Hoja de productos
-        if (reportData.productosDetalle && reportData.productosDetalle.length > 0) {
-          const productosHeader = [
-            ['COMUCTIVA'],
-            ['Plataforma de Comercio Comunitario'],
-            ['Fecha: ' + new Date().toLocaleDateString('es-ES') + ' | Hora: ' + new Date().toLocaleTimeString('es-ES')],
-            [''],
-            ['Reporte de Productos'],
-            ['']
-          ];
-          
-          const productosData = reportData.productosDetalle.map(p => ({
-            'Nombre': p.nombre,
-            'Valor': '$' + (p.valor || 0).toFixed(2),
-            'Cantidad': p.cantidad,
-            'Categoria': p.categoria,
-            'Descripcion': p.descripcion
-          }));
-          
-          const wsProductos = XLSX.utils.json_to_sheet(productosData, { origin: 'A7' });
-          XLSX.utils.sheet_add_aoa(wsProductos, productosHeader, { origin: 'A1' });
-          wsProductos['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 15 }, { wch: 40 }];
-          XLSX.utils.book_append_sheet(wb, wsProductos, 'Productos');
-        }
-        
-        // Hoja de pedidos
-        if (reportData.pedidosDetalle && reportData.pedidosDetalle.length > 0) {
-          const pedidosHeader = [
-            ['COMUCTIVA'],
-            ['Plataforma de Comercio Comunitario'],
-            ['Fecha: ' + new Date().toLocaleDateString('es-ES') + ' | Hora: ' + new Date().toLocaleTimeString('es-ES')],
-            [''],
-            ['Reporte de Pedidos'],
-            ['']
-          ];
-          
-          const pedidosData = reportData.pedidosDetalle.map(p => ({
-            'Fecha': p.fecha,
-            'Valor': '$' + (p.valor || 0).toFixed(2),
-            'Estado': p.estado,
-            'Direccion': p.direccion,
-            'Metodo de Pago': p.metodoPago
-          }));
-          
-          const wsPedidos = XLSX.utils.json_to_sheet(pedidosData, { origin: 'A7' });
-          XLSX.utils.sheet_add_aoa(wsPedidos, pedidosHeader, { origin: 'A1' });
-          wsPedidos['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 15 }];
-          XLSX.utils.book_append_sheet(wb, wsPedidos, 'Pedidos');
-        }
-        
-        // Hoja de ventas
-        if (reportData.ventasDetalle && reportData.ventasDetalle.length > 0) {
-          const ventasHeader = [
-            ['COMUCTIVA'],
-            ['Plataforma de Comercio Comunitario'],
-            ['Fecha: ' + new Date().toLocaleDateString('es-ES') + ' | Hora: ' + new Date().toLocaleTimeString('es-ES')],
-            [''],
-            ['Reporte de Ventas'],
-            ['']
-          ];
-          
-          const ventasData = reportData.ventasDetalle.map(v => ({
-            'Producto': v.producto,
-            'Cantidad': v.cantidad,
-            'Valor Unitario': '$' + (v.valor || 0).toFixed(2),
-            'Total': '$' + (v.total || 0).toFixed(2),
-            'Fecha': v.fecha,
-            'Estado': v.estado
-          }));
-          
-          const wsVentas = XLSX.utils.json_to_sheet(ventasData, { origin: 'A7' });
-          XLSX.utils.sheet_add_aoa(wsVentas, ventasHeader, { origin: 'A1' });
-          wsVentas['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 15 }];
-          XLSX.utils.book_append_sheet(wb, wsVentas, 'Ventas');
-        }
-        
-        // Hoja de compras
-        if (reportData.comprasDetalle && reportData.comprasDetalle.length > 0) {
-          const comprasHeader = [
-            ['COMUCTIVA'],
-            ['Plataforma de Comercio Comunitario'],
-            ['Fecha: ' + new Date().toLocaleDateString('es-ES') + ' | Hora: ' + new Date().toLocaleTimeString('es-ES')],
-            [''],
-            ['Reporte de Compras'],
-            ['']
-          ];
-          
-          const comprasData = reportData.comprasDetalle.map(c => ({
-            'Producto': c.producto,
-            'Cantidad': c.cantidad,
-            'Valor Unitario': '$' + (c.valor || 0).toFixed(2),
-            'Total': '$' + (c.total || 0).toFixed(2),
-            'Vendedor': c.vendedor,
-            'Fecha': c.fecha,
-            'Estado': c.estado
-          }));
-          
-          const wsCompras = XLSX.utils.json_to_sheet(comprasData, { origin: 'A7' });
-          XLSX.utils.sheet_add_aoa(wsCompras, comprasHeader, { origin: 'A1' });
-          wsCompras['!cols'] = [{ wch: 18 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 15 }];
-          XLSX.utils.book_append_sheet(wb, wsCompras, 'Compras');
-        }
-        
-        XLSX.writeFile(wb, 'COMUCTIVA_Reporte_Completo_' + new Date().toISOString().split('T')[0] + '.xlsx');
+        exportConsolidatedToExcel(reportData);
       } else if (Array.isArray(reportData) && reportData.length > 0) {
-        const header = [
-          ['COMUCTIVA'],
-          ['Plataforma de Comercio Comunitario'],
-          ['Fecha: ' + new Date().toLocaleDateString('es-ES') + ' | Hora: ' + new Date().toLocaleTimeString('es-ES')],
-          [''],
-          ['Reporte de ' + getReportTitle()],
-          ['']
-        ];
-        
-        const ws = XLSX.utils.json_to_sheet(reportData, { origin: 'A7' });
-        XLSX.utils.sheet_add_aoa(ws, header, { origin: 'A1' });
-        
-        if (reportType === 'productos') {
-          ws['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 15 }, { wch: 40 }];
-        } else if (reportType === 'pedidos') {
-          ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 30 }, { wch: 15 }];
-        } else if (reportType === 'ventas') {
-          ws['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 15 }];
-        } else if (reportType === 'compras') {
-          ws['!cols'] = [{ wch: 18 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 15 }];
-        }
-        
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, getReportTitle());
-        XLSX.writeFile(wb, 'COMUCTIVA_Reporte_' + reportType + '_' + new Date().toISOString().split('T')[0] + '.xlsx');
+        exportSingleReportToExcel(reportData, reportType, getReportTitle());
       } else {
         alert('No hay datos para exportar');
       }
@@ -346,372 +187,13 @@ const Reports = () => {
 
   const exportToPDF = () => {
     try {
-      const doc = new jsPDF();
-      let currentPage = 1;
-      
-      // Función para agregar encabezado en cada página
-      const addHeader = () => {
-        // Fondo verde en el encabezado
-        doc.setFillColor(26, 105, 43);
-        doc.rect(0, 0, 210, 35, 'F');
-        
-        // Agregar logo
-        try {
-          doc.addImage(logo, 'PNG', 15, 8, 20, 20);
-        } catch (e) {
-          console.log('No se pudo agregar el logo');
-        }
-        
-        // Título COMUCTIVA en blanco
-        doc.setFontSize(22);
-        doc.setTextColor(255, 255, 255);
-        doc.setFont(undefined, 'bold');
-        doc.text('COMUCTIVA', 45, 18);
-        
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        doc.text('Plataforma de Comercio Comunitario', 45, 24);
-        
-        // Línea decorativa
-        doc.setDrawColor(255, 255, 255);
-        doc.setLineWidth(0.5);
-        doc.line(15, 32, 195, 32);
-        
-        // Restablecer color de texto
-        doc.setTextColor(0, 0, 0);
-      };
-      
-      // Función para agregar pie de página
-      const addFooter = (pageNum) => {
-        doc.setFontSize(8);
-        doc.setTextColor(128, 128, 128);
-        doc.text(
-          `© ${new Date().getFullYear()} COMUCTIVA - Todos los derechos reservados`,
-          105,
-          doc.internal.pageSize.height - 15,
-          { align: 'center' }
-        );
-        doc.text(
-          'Documento generado automáticamente',
-          105,
-          doc.internal.pageSize.height - 10,
-          { align: 'center' }
-        );
-        doc.text(
-          `Página ${pageNum}`,
-          195,
-          doc.internal.pageSize.height - 10,
-          { align: 'right' }
-        );
-      };
-      
-      // Agregar encabezado inicial
-      addHeader();
-      
-      // Información del reporte
-      doc.setFontSize(16);
-      doc.setTextColor(26, 105, 43);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Reporte de ${getReportTitle()}`, 105, 45, { align: 'center' });
-      
-      doc.setFontSize(9);
-      doc.setTextColor(100, 100, 100);
-      doc.setFont(undefined, 'normal');
-      doc.text(
-        `Generado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`,
-        105,
-        51,
-        { align: 'center' }
-      );
-      
       if (reportType === 'todos') {
-        let currentY = 60;
-        const resumen = reportData.resumen || reportData;
-        
-        // Reporte consolidado - Resumen
-        doc.autoTable({
-          startY: currentY,
-          head: [['Métrica', 'Valor']],
-          body: [
-            ['Total Productos', resumen.productos || 0],
-            ['Total Pedidos', resumen.pedidos || 0],
-            ['Total Ventas', resumen.ventas || 0],
-            ['Ingresos por Ventas', `$${(resumen.totalVentas || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-            ['Total en Compras', `$${(resumen.totalCompras || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
-          ],
-          theme: 'grid',
-          headStyles: { 
-            fillColor: [26, 105, 43],
-            fontSize: 11,
-            fontStyle: 'bold',
-            halign: 'center'
-          },
-          bodyStyles: {
-            fontSize: 10
-          },
-          alternateRowStyles: {
-            fillColor: [250, 250, 250]
-          },
-          margin: { left: 15, right: 15 }
-        });
-        
-        currentY = doc.lastAutoTable.finalY + 20;
-        
-        // Tabla de Productos
-        if (reportData.productosDetalle && reportData.productosDetalle.length > 0) {
-          if (currentY > 240) {
-            doc.addPage();
-            currentPage++;
-            addHeader();
-            currentY = 45;
-          }
-          
-          doc.setFontSize(14);
-          doc.setTextColor(26, 105, 43);
-          doc.setFont(undefined, 'bold');
-          doc.text('Productos', 15, currentY);
-          currentY += 8;
-          
-          const productosRows = reportData.productosDetalle.map(item => [
-            item.nombre,
-            `$${item.valor?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`,
-            item.cantidad,
-            item.categoria,
-            item.descripcion?.substring(0, 35) + (item.descripcion?.length > 35 ? '...' : '')
-          ]);
-          
-          doc.autoTable({
-            startY: currentY,
-            head: [['Nombre', 'Valor', 'Cant.', 'Categoría', 'Descripción']],
-            body: productosRows,
-            theme: 'striped',
-            headStyles: { 
-              fillColor: [26, 105, 43],
-              fontSize: 9,
-              fontStyle: 'bold'
-            },
-            bodyStyles: {
-              fontSize: 8
-            },
-            alternateRowStyles: {
-              fillColor: [245, 250, 245]
-            },
-            margin: { left: 15, right: 15 },
-            didDrawPage: (data) => {
-              if (data.pageNumber > currentPage) {
-                currentPage = data.pageNumber;
-                addHeader();
-              }
-            }
-          });
-          
-          currentY = doc.lastAutoTable.finalY + 15;
-        }
-        
-        // Tabla de Pedidos
-        if (reportData.pedidosDetalle && reportData.pedidosDetalle.length > 0) {
-          if (currentY > 240) {
-            doc.addPage();
-            currentPage++;
-            addHeader();
-            currentY = 45;
-          }
-          
-          doc.setFontSize(14);
-          doc.setTextColor(26, 105, 43);
-          doc.setFont(undefined, 'bold');
-          doc.text('Pedidos', 15, currentY);
-          currentY += 8;
-          
-          const pedidosRows = reportData.pedidosDetalle.map(item => [
-            item.fecha,
-            `$${item.valor?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`,
-            item.estado,
-            item.direccion?.substring(0, 30) + (item.direccion?.length > 30 ? '...' : ''),
-            item.metodoPago
-          ]);
-          
-          doc.autoTable({
-            startY: currentY,
-            head: [['Fecha', 'Valor', 'Estado', 'Dirección', 'Pago']],
-            body: pedidosRows,
-            theme: 'striped',
-            headStyles: { 
-              fillColor: [26, 105, 43],
-              fontSize: 9,
-              fontStyle: 'bold'
-            },
-            bodyStyles: {
-              fontSize: 8
-            },
-            alternateRowStyles: {
-              fillColor: [245, 250, 245]
-            },
-            margin: { left: 15, right: 15 },
-            didDrawPage: (data) => {
-              if (data.pageNumber > currentPage) {
-                currentPage = data.pageNumber;
-                addHeader();
-              }
-            }
-          });
-          
-          currentY = doc.lastAutoTable.finalY + 15;
-        }
-        
-        // Tabla de Ventas
-        if (reportData.ventasDetalle && reportData.ventasDetalle.length > 0) {
-          if (currentY > 240) {
-            doc.addPage();
-            currentPage++;
-            addHeader();
-            currentY = 45;
-          }
-          
-          doc.setFontSize(14);
-          doc.setTextColor(26, 105, 43);
-          doc.setFont(undefined, 'bold');
-          doc.text('Ventas', 15, currentY);
-          currentY += 8;
-          
-          const ventasRows = reportData.ventasDetalle.map(item => [
-            item.producto?.substring(0, 20) + (item.producto?.length > 20 ? '...' : ''),
-            item.cantidad,
-            `$${item.valor?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`,
-            `$${item.total?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`,
-            item.fecha,
-            item.estado
-          ]);
-          
-          doc.autoTable({
-            startY: currentY,
-            head: [['Producto', 'Cant.', 'Valor Unit.', 'Total', 'Fecha', 'Estado']],
-            body: ventasRows,
-            theme: 'striped',
-            headStyles: { 
-              fillColor: [26, 105, 43],
-              fontSize: 9,
-              fontStyle: 'bold'
-            },
-            bodyStyles: {
-              fontSize: 8
-            },
-            alternateRowStyles: {
-              fillColor: [245, 250, 245]
-            },
-            margin: { left: 15, right: 15 },
-            didDrawPage: (data) => {
-              if (data.pageNumber > currentPage) {
-                currentPage = data.pageNumber;
-                addHeader();
-              }
-            }
-          });
-          
-          currentY = doc.lastAutoTable.finalY + 15;
-        }
-        
-        // Tabla de Compras
-        if (reportData.comprasDetalle && reportData.comprasDetalle.length > 0) {
-          if (currentY > 240) {
-            doc.addPage();
-            currentPage++;
-            addHeader();
-            currentY = 45;
-          }
-          
-          doc.setFontSize(14);
-          doc.setTextColor(26, 105, 43);
-          doc.setFont(undefined, 'bold');
-          doc.text('Compras', 15, currentY);
-          currentY += 8;
-          
-          const comprasRows = reportData.comprasDetalle.map(item => [
-            item.producto?.substring(0, 18) + (item.producto?.length > 18 ? '...' : ''),
-            item.cantidad,
-            `$${item.valor?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`,
-            `$${item.total?.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`,
-            item.vendedor?.substring(0, 15) + (item.vendedor?.length > 15 ? '...' : ''),
-            item.fecha,
-            item.estado
-          ]);
-          
-          doc.autoTable({
-            startY: currentY,
-            head: [['Producto', 'Cant.', 'Valor Unit.', 'Total', 'Vendedor', 'Fecha', 'Estado']],
-            body: comprasRows,
-            theme: 'striped',
-            headStyles: { 
-              fillColor: [26, 105, 43],
-              fontSize: 8,
-              fontStyle: 'bold'
-            },
-            bodyStyles: {
-              fontSize: 7
-            },
-            alternateRowStyles: {
-              fillColor: [245, 250, 245]
-            },
-            margin: { left: 15, right: 15 },
-            didDrawPage: (data) => {
-              if (data.pageNumber > currentPage) {
-                currentPage = data.pageNumber;
-                addHeader();
-              }
-            }
-          });
-        }
+        exportConsolidatedToPDF(reportData);
+      } else if (Array.isArray(reportData) && reportData.length > 0) {
+        exportSingleReportToPDF(reportData, reportType, getReportTitle());
       } else {
-        // Reporte individual
-        if (!Array.isArray(reportData) || reportData.length === 0) {
-          doc.setFontSize(12);
-          doc.setTextColor(150, 150, 150);
-          doc.text('No hay datos para mostrar', 105, 70, { align: 'center' });
-        } else {
-          const headers = Object.keys(reportData[0] || {});
-          const rows = reportData.map(item => headers.map(key => {
-            const value = item[key];
-            // Formatear valores para evitar undefined en PDF
-            if (value === null || value === undefined) return 'N/A';
-            if (typeof value === 'number') return value.toFixed(2);
-            return String(value);
-          }));
-          
-          doc.autoTable({
-            startY: 58,
-            head: [headers],
-            body: rows,
-            theme: 'striped',
-            headStyles: { 
-              fillColor: [26, 105, 43],
-              fontSize: 10,
-              fontStyle: 'bold'
-            },
-            bodyStyles: {
-              fontSize: 9
-            },
-            alternateRowStyles: {
-              fillColor: [245, 250, 245]
-            },
-            margin: { left: 15, right: 15 },
-            didDrawPage: (data) => {
-              if (data.pageNumber > currentPage) {
-                currentPage = data.pageNumber;
-                addHeader();
-              }
-            }
-          });
-        }
+        alert('No hay datos para exportar');
       }
-      
-      // Agregar pie de página a todas las páginas
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        addFooter(i);
-      }
-      
-      doc.save(`COMUCTIVA_Reporte_${reportType}_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error('Error al generar PDF:', error);
       alert('Error al generar el PDF. Por favor, intenta nuevamente.');
@@ -872,44 +354,44 @@ const Reports = () => {
       <>
         <Row className="mt-4">
           <Col md={6} lg={4} className="mb-3">
-            <Card className="h-100 shadow-sm">
+            <Card className="consolidated-summary-card">
               <Card.Body>
-                <h5 className="text-muted">📦 Total Productos</h5>
-                <h2 className="mb-0">{resumen.productos || 0}</h2>
+                <h5>📦 Total Productos</h5>
+                <h2>{resumen.productos || 0}</h2>
               </Card.Body>
             </Card>
           </Col>
           <Col md={6} lg={4} className="mb-3">
-            <Card className="h-100 shadow-sm">
+            <Card className="consolidated-summary-card">
               <Card.Body>
-                <h5 className="text-muted">📋 Total Pedidos</h5>
-                <h2 className="mb-0">{resumen.pedidos || 0}</h2>
+                <h5>📋 Total Pedidos</h5>
+                <h2>{resumen.pedidos || 0}</h2>
               </Card.Body>
             </Card>
           </Col>
           <Col md={6} lg={4} className="mb-3">
-            <Card className="h-100 shadow-sm">
+            <Card className="consolidated-summary-card">
               <Card.Body>
-                <h5 className="text-muted">💰 Total Ventas</h5>
-                <h2 className="mb-0">{resumen.ventas || 0}</h2>
+                <h5>💰 Total Ventas</h5>
+                <h2>{resumen.ventas || 0}</h2>
               </Card.Body>
             </Card>
           </Col>
           <Col md={6} lg={6} className="mb-3">
-            <Card className="h-100 shadow-sm border-success">
+            <Card className="consolidated-summary-card consolidated-card-success">
               <Card.Body>
-                <h5 className="text-success">💵 Ingresos por Ventas</h5>
-                <h2 className="mb-0 text-success">
+                <h5>💵 Ingresos por Ventas</h5>
+                <h2>
                   ${resumen.totalVentas?.toFixed(2) || '0.00'}
                 </h2>
               </Card.Body>
             </Card>
           </Col>
           <Col md={6} lg={6} className="mb-3">
-            <Card className="h-100 shadow-sm border-info">
+            <Card className="consolidated-summary-card consolidated-card-info">
               <Card.Body>
-                <h5 className="text-info">🛒 Total en Compras</h5>
-                <h2 className="mb-0 text-info">
+                <h5>🛒 Total en Compras</h5>
+                <h2>
                   ${resumen.totalCompras?.toFixed(2) || '0.00'}
                 </h2>
               </Card.Body>
@@ -919,14 +401,14 @@ const Reports = () => {
 
         {/* Tablas detalladas */}
         {reportData.productosDetalle && reportData.productosDetalle.length > 0 && (
-          <Card className="shadow-sm mb-4">
-            <Card.Header style={{ backgroundColor: '#1a692b', color: 'white' }}>
-              <h5 className="mb-0">📦 Productos</h5>
+          <Card className="consolidated-detail-card">
+            <Card.Header className="consolidated-detail-header">
+              <h5>📦 Productos</h5>
             </Card.Header>
-            <Card.Body className="p-0">
+            <Card.Body>
               <div className="table-responsive">
                 <Table striped hover className="mb-0">
-                  <thead style={{ backgroundColor: '#1a692b', color: 'white' }}>
+                  <thead className="consolidated-detail-header">
                     <tr>
                       <th>Nombre</th>
                       <th>Valor</th>
@@ -942,7 +424,7 @@ const Reports = () => {
                         <td>${item.valor?.toFixed(2)}</td>
                         <td>{item.cantidad}</td>
                         <td>{item.categoria}</td>
-                        <td className="text-truncate" style={{ maxWidth: '200px' }}>{item.descripcion}</td>
+                        <td className="text-truncate-custom">{item.descripcion}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -953,14 +435,14 @@ const Reports = () => {
         )}
 
         {reportData.pedidosDetalle && reportData.pedidosDetalle.length > 0 && (
-          <Card className="shadow-sm mb-4">
-            <Card.Header style={{ backgroundColor: '#1a692b', color: 'white' }}>
-              <h5 className="mb-0">📋 Pedidos</h5>
+          <Card className="consolidated-detail-card">
+            <Card.Header className="consolidated-detail-header">
+              <h5>📋 Pedidos</h5>
             </Card.Header>
-            <Card.Body className="p-0">
+            <Card.Body>
               <div className="table-responsive">
                 <Table striped hover className="mb-0">
-                  <thead style={{ backgroundColor: '#1a692b', color: 'white' }}>
+                  <thead className="consolidated-detail-header">
                     <tr>
                       <th>Fecha</th>
                       <th>Valor</th>
@@ -995,14 +477,14 @@ const Reports = () => {
         )}
 
         {reportData.ventasDetalle && reportData.ventasDetalle.length > 0 && (
-          <Card className="shadow-sm mb-4">
-            <Card.Header style={{ backgroundColor: '#1a692b', color: 'white' }}>
-              <h5 className="mb-0">💰 Ventas</h5>
+          <Card className="consolidated-detail-card">
+            <Card.Header className="consolidated-detail-header">
+              <h5>💰 Ventas</h5>
             </Card.Header>
-            <Card.Body className="p-0">
+            <Card.Body>
               <div className="table-responsive">
                 <Table striped hover className="mb-0">
-                  <thead style={{ backgroundColor: '#1a692b', color: 'white' }}>
+                  <thead className="consolidated-detail-header">
                     <tr>
                       <th>Producto</th>
                       <th>Cantidad</th>
@@ -1039,14 +521,14 @@ const Reports = () => {
         )}
 
         {reportData.comprasDetalle && reportData.comprasDetalle.length > 0 && (
-          <Card className="shadow-sm mb-4">
-            <Card.Header style={{ backgroundColor: '#1a692b', color: 'white' }}>
-              <h5 className="mb-0">🛒 Compras</h5>
+          <Card className="consolidated-detail-card">
+            <Card.Header className="consolidated-detail-header">
+              <h5>🛒 Compras</h5>
             </Card.Header>
-            <Card.Body className="p-0">
+            <Card.Body>
               <div className="table-responsive">
                 <Table striped hover className="mb-0">
-                  <thead style={{ backgroundColor: '#1a692b', color: 'white' }}>
+                  <thead className="consolidated-detail-header">
                     <tr>
                       <th>Producto</th>
                       <th>Cantidad</th>
@@ -1088,29 +570,27 @@ const Reports = () => {
   };
 
   return (
-    <Container className="py-4">
-      <Card className="shadow-sm mb-4">
-        <Card.Header style={{ backgroundColor: '#1a692b', color: 'white' }}>
-          <div className="d-flex align-items-center">
+    <Container className="reports-container">
+      <Card className="reports-header-card">
+        <Card.Header>
+          <div className="reports-title">
             <img 
               src={logo} 
               alt="Comuctiva Logo" 
-              height="40"
-              className="me-3"
-              style={{ borderRadius: '5px' }}
+              className="reports-logo"
             />
-            <h3 className="mb-0">📊 Reportes COMUCTIVA</h3>
+            <h3>📊 Reportes COMUCTIVA</h3>
           </div>
         </Card.Header>
         <Card.Body>
           <Row className="align-items-center mb-3">
             <Col md={4}>
               <Form.Group>
-                <Form.Label className="fw-bold">Tipo de Reporte:</Form.Label>
+                <Form.Label className="report-type-label">Tipo de Reporte:</Form.Label>
                 <Form.Select 
                   value={reportType} 
                   onChange={(e) => setReportType(e.target.value)}
-                  style={{ borderColor: '#1a692b' }}
+                  className="report-type-select"
                 >
                   <option value="productos">Productos</option>
                   <option value="pedidos">Pedidos</option>
@@ -1120,7 +600,7 @@ const Reports = () => {
                 </Form.Select>
               </Form.Group>
             </Col>
-            <Col md={8} className="text-end">
+            <Col md={8} className="report-actions">
               <Button 
                 variant="success" 
                 onClick={exportToExcel}
@@ -1148,7 +628,7 @@ const Reports = () => {
           </Row>
 
           {lastUpdate && (
-            <small className="text-muted">
+            <small className="last-update">
               Última actualización: {lastUpdate.toLocaleString('es-ES')}
             </small>
           )}
@@ -1162,23 +642,23 @@ const Reports = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-5">
+        <div className="loading-container">
           <Spinner animation="border" variant="success" />
-          <p className="mt-3">Cargando datos del reporte...</p>
+          <p className="loading-text">Cargando datos del reporte...</p>
         </div>
       ) : (
         <>
           {reportType === 'todos' ? (
             renderConsolidatedReport()
           ) : (
-            <Card className="shadow-sm">
-              <Card.Header style={{ backgroundColor: '#f8f9fa' }}>
-                <h5 className="mb-0">Vista Previa - {getReportTitle()}</h5>
+            <Card className="report-preview-card">
+              <Card.Header className="report-preview-header">
+                <h5 className="report-preview-title">Vista Previa - {getReportTitle()}</h5>
               </Card.Header>
               <Card.Body className="p-0">
                 <div className="table-responsive">
-                  <Table striped hover className="mb-0">
-                    <thead style={{ backgroundColor: '#1a692b', color: 'white' }}>
+                  <Table striped hover className="report-table mb-0">
+                    <thead>
                       {renderTableHeaders()}
                     </thead>
                     <tbody>
@@ -1193,7 +673,7 @@ const Reports = () => {
       )}
 
       {!loading && Array.isArray(reportData) && reportData.length === 0 && reportType !== 'todos' && (
-        <Card className="shadow-sm text-center py-5">
+        <Card className="report-empty-state">
           <Card.Body>
             <h4 className="text-muted">No hay datos para mostrar</h4>
             <p className="text-muted">Intenta con otro tipo de reporte o actualiza los datos.</p>
@@ -1201,9 +681,8 @@ const Reports = () => {
         </Card>
       )}
 
-      <div className="text-center mt-4 text-muted">
+      <div className="report-footer">
         <small>© {new Date().getFullYear()} COMUCTIVA - Todos los derechos reservados</small>
-        <br />
         <small>Documento generado automáticamente</small>
       </div>
     </Container>
