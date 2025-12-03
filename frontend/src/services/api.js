@@ -101,10 +101,16 @@ export const createComentario = (comentarioData) => api.post('/comentarios', com
 export const updateComentario = (id, comentarioData) => api.put(`/comentarios/${id}`, comentarioData);
 export const deleteComentario = (id) => api.delete(`/comentarios/${id}`);
 
+// Comentarios (admin)
+export const getComentariosAdmin = (params) => api.get('/admin/comentarios', { params });
+export const deleteComentarioAdmin = (id) => api.delete(`/admin/comentarios/${id}`);
+export const restoreComentarioAdmin = (id) => api.put(`/admin/comentarios/${id}/restaurar`);
+
 // Usuario
 export const getUsuario = (numeroDocumento) => api.get(`/usuarios/${numeroDocumento}`);
 export const updateUsuario = (numeroDocumento, userData) => api.put(`/usuarios/${numeroDocumento}`, userData);
 export const cambiarPassword = (numeroDocumento, passwordData) => api.put(`/usuarios/${numeroDocumento}/cambiar-password`, passwordData);
+export const deleteUsuario = (numeroDocumento) => api.delete(`/usuarios/${numeroDocumento}`);
 
 // Admin
 export const getAdminSummary = () => api.get('/admin/summary');
@@ -114,6 +120,9 @@ export const cambiarEstadoUsuario = (numeroDocumento, activo) => api.put(`/usuar
 
 // Pedidos (admin)
 export const getAllPedidos = () => api.get('/pedidos');
-export const actualizarEstadoPedido = (id, estado) => api.put(`/pedidos/${id}/estado?estado=${encodeURIComponent(estado)}`);
+export const actualizarEstadoPedido = (id, estado) => {
+  // Use axios params to build query string reliably
+  return api.put(`/pedidos/${id}/estado`, null, { params: { estado } });
+};
 
 export default api;

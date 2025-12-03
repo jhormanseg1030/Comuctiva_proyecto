@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './components/ToastProvider';
 
 // Styles
 import './styles/custom.css';
@@ -28,6 +29,8 @@ import AdminRoute from './components/AdminRoute';
 import AdminUsuarios from './pages/AdminUsuarios';
 import AdminPedidos from './pages/AdminPedidos';
 import AdminLayout from './pages/AdminLayout';
+import AdminPromociones from './pages/AdminPromociones';
+import AdminModeracion from './pages/AdminModeracion';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -114,6 +117,8 @@ function AppContent() {
               <Route index element={<AdminDashboard/>} />
               <Route path="usuarios" element={<AdminUsuarios/>} />
               <Route path="pedidos" element={<AdminPedidos/>} />
+              <Route path="moderacion" element={<AdminModeracion/>} />
+              <Route path="papelera" element={<AdminPromociones/>} />
             </Route>
             
             {/* Catch all */}
@@ -130,7 +135,9 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </CartProvider>
     </AuthProvider>
   );

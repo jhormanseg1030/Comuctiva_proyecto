@@ -28,28 +28,11 @@ public class ComentarioController {
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> crearComentario(
-            @RequestBody(required = false) java.util.Map<String, Object> body,
-            @RequestParam(required = false) Long productoId,
-            @RequestParam(required = false) String comentario,
-            @RequestParam(required = false) Integer calificacion,
+            @RequestParam Long productoId,
+            @RequestParam String comentario,
+            @RequestParam Integer calificacion,
             Authentication authentication) {
         try {
-            // Soportar tanto JSON en body como request params/form
-            if (body != null) {
-                if (productoId == null && body.get("productoId") != null) {
-                    productoId = ((Number) body.get("productoId")).longValue();
-                }
-                if ((comentario == null || comentario.isEmpty()) && body.get("contenido") != null) {
-                    comentario = body.get("contenido").toString();
-                }
-                if ((comentario == null || comentario.isEmpty()) && body.get("comentario") != null) {
-                    comentario = body.get("comentario").toString();
-                }
-                if (calificacion == null && body.get("calificacion") != null) {
-                    calificacion = ((Number) body.get("calificacion")).intValue();
-                }
-            }
-
             String numeroDocumento = authentication.getName();
             Comentario nuevoComentario = comentarioService.crearComentario(
                     productoId, numeroDocumento, comentario, calificacion);
@@ -111,22 +94,10 @@ public class ComentarioController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> actualizarComentario(
             @PathVariable Long comentarioId,
-            @RequestBody(required = false) java.util.Map<String, Object> body,
             @RequestParam(required = false) String comentario,
             @RequestParam(required = false) Integer calificacion,
             Authentication authentication) {
         try {
-            if (body != null) {
-                if ((comentario == null || comentario.isEmpty()) && body.get("contenido") != null) {
-                    comentario = body.get("contenido").toString();
-                }
-                if ((comentario == null || comentario.isEmpty()) && body.get("comentario") != null) {
-                    comentario = body.get("comentario").toString();
-                }
-                if (calificacion == null && body.get("calificacion") != null) {
-                    calificacion = ((Number) body.get("calificacion")).intValue();
-                }
-            }
             String numeroDocumento = authentication.getName();
             Comentario comentarioActualizado = comentarioService.actualizarComentario(
                     comentarioId, numeroDocumento, comentario, calificacion);

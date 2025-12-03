@@ -25,9 +25,6 @@ public class ProductoController {
     private ProductoService productoService;
 
     @Autowired
-    private com.ecomerce.service.ComentarioService comentarioService;
-
-    @Autowired
     private FileStorageService fileStorageService;
 
     private String getBaseUrl() {
@@ -41,19 +38,6 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
-
-        // Añadir promedio y total comentarios
-        productos.forEach(p -> {
-            try {
-                double avg = comentarioService.calcularPromedioCalificacion(p.getId());
-                p.setCalificacionPromedio(avg);
-                int total = comentarioService.obtenerComentariosPorProducto(p.getId()).size();
-                p.setTotalComentarios(total);
-            } catch (Exception ex) {
-                p.setCalificacionPromedio(0.0);
-                p.setTotalComentarios(0);
-            }
-        });
         return ResponseEntity.ok(productos);
     }
 
@@ -64,18 +48,6 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
-
-        productos.forEach(p -> {
-            try {
-                double avg = comentarioService.calcularPromedioCalificacion(p.getId());
-                p.setCalificacionPromedio(avg);
-                int total = comentarioService.obtenerComentariosPorProducto(p.getId()).size();
-                p.setTotalComentarios(total);
-            } catch (Exception ex) {
-                p.setCalificacionPromedio(0.0);
-                p.setTotalComentarios(0);
-            }
-        });
         return ResponseEntity.ok(productos);
     }
 
@@ -83,19 +55,7 @@ public class ProductoController {
     @Transactional(readOnly = true)
     public ResponseEntity<?> obtenerProducto(@PathVariable Long id) {
         return productoService.obtenerProductoPorId(id)
-                .map(producto -> {
-                    ProductoDTO dto = new ProductoDTO(producto);
-                    try {
-                        double avg = comentarioService.calcularPromedioCalificacion(dto.getId());
-                        dto.setCalificacionPromedio(avg);
-                        int total = comentarioService.obtenerComentariosPorProducto(dto.getId()).size();
-                        dto.setTotalComentarios(total);
-                    } catch (Exception ex) {
-                        dto.setCalificacionPromedio(0.0);
-                        dto.setTotalComentarios(0);
-                    }
-                    return ResponseEntity.ok(dto);
-                })
+                .map(producto -> ResponseEntity.ok(new ProductoDTO(producto)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -106,18 +66,6 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
-
-        productos.forEach(p -> {
-            try {
-                double avg = comentarioService.calcularPromedioCalificacion(p.getId());
-                p.setCalificacionPromedio(avg);
-                int total = comentarioService.obtenerComentariosPorProducto(p.getId()).size();
-                p.setTotalComentarios(total);
-            } catch (Exception ex) {
-                p.setCalificacionPromedio(0.0);
-                p.setTotalComentarios(0);
-            }
-        });
         return ResponseEntity.ok(productos);
     }
 
@@ -128,18 +76,6 @@ public class ProductoController {
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());
-
-        productos.forEach(p -> {
-            try {
-                double avg = comentarioService.calcularPromedioCalificacion(p.getId());
-                p.setCalificacionPromedio(avg);
-                int total = comentarioService.obtenerComentariosPorProducto(p.getId()).size();
-                p.setTotalComentarios(total);
-            } catch (Exception ex) {
-                p.setCalificacionPromedio(0.0);
-                p.setTotalComentarios(0);
-            }
-        });
         return ResponseEntity.ok(productos);
     }
 
@@ -147,28 +83,6 @@ public class ProductoController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<ProductoDTO>> obtenerProductosPorUsuario(@PathVariable String numeroDocumento) {
         List<ProductoDTO> productos = productoService.obtenerProductosPorUsuario(numeroDocumento)
-                .stream()
-                .map(ProductoDTO::new)
-                .collect(Collectors.toList());
-
-        productos.forEach(p -> {
-            try {
-                double avg = comentarioService.calcularPromedioCalificacion(p.getId());
-                p.setCalificacionPromedio(avg);
-                int total = comentarioService.obtenerComentariosPorProducto(p.getId()).size();
-                p.setTotalComentarios(total);
-            } catch (Exception ex) {
-                p.setCalificacionPromedio(0.0);
-                p.setTotalComentarios(0);
-            }
-        });
-        return ResponseEntity.ok(productos);
-    }
-
-    @GetMapping("/buscar")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<ProductoDTO>> buscarProductos(@RequestParam(required = false) String keyword) {
-        List<ProductoDTO> productos = productoService.buscarProductos(keyword)
                 .stream()
                 .map(ProductoDTO::new)
                 .collect(Collectors.toList());

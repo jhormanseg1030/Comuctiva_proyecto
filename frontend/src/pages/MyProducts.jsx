@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Alert, Spinner, Modal, Form } from 'react-bootstrap';
+import { useToast } from '../components/ToastProvider';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getProductosByUsuario, deleteProducto, cambiarEstadoProducto, updateProducto } from '../services/api';
@@ -39,6 +40,7 @@ const MyProducts = () => {
     } catch (err) {
       setError('Error al cargar productos');
       console.error(err);
+      toastRef?.add && toastRef.add('Error al cargar productos', 'danger');
     } finally {
       setLoading(false);
     }
@@ -47,7 +49,7 @@ const MyProducts = () => {
   const handleDelete = async (id) => {
     // Delete option removed from UI; keep function in case it's needed for admins later
     if (!isAdmin) {
-      alert('Solo administradores pueden eliminar productos.');
+      toastRef?.add && toastRef.add('Solo administradores pueden eliminar productos.', 'warning');
       return;
     }
 
@@ -55,11 +57,11 @@ const MyProducts = () => {
 
     try {
       await deleteProducto(id);
-      alert('Producto eliminado exitosamente');
+      toastRef?.add && toastRef.add('Producto eliminado exitosamente', 'success');
       loadMyProducts();
     } catch (err) {
       console.error('Error al eliminar producto:', err);
-      alert('Error al eliminar el producto');
+      toastRef?.add && toastRef.add('Error al eliminar el producto', 'danger');
     }
   };
 
@@ -263,17 +265,20 @@ const MyProducts = () => {
         } else {
           // keep optimistic UI but mark error so user can retry
           setProductos(prev => prev.map(p => (String(p.id) === String(editProduct.id) ? { ...p, syncing: false, syncError: true } : p)));
-          alert('Error al guardar cambios');
+            toastRef?.add && toastRef.add('Error al guardar cambios', 'danger');
         }
       } catch (innerErr) {
         console.error('Error verificando edición en servidor tras fallo:', innerErr);
         setProductos(prev => prev.map(p => (String(p.id) === String(editProduct.id) ? { ...p, syncing: false, syncError: true } : p)));
-        alert('Error al guardar cambios');
+        toastRef?.add && toastRef.add('Error al guardar cambios', 'danger');
       }
     } finally {
       setSavingEdit(false);
     }
   };
+
+  // Toast hook
+  const toastRef = useToast();
 
   if (loading) {
     return (

@@ -30,7 +30,8 @@ const AdminPedidos = () => {
       fetchPedidos();
     } catch (err) {
       console.error(err);
-      alert('Error al actualizar estado');
+      const serverMessage = err?.response?.data?.message || err?.response?.data || err.message || 'Error al actualizar estado';
+      alert(`Error al actualizar estado: ${JSON.stringify(serverMessage)}`);
     }
   };
 
@@ -57,7 +58,7 @@ const AdminPedidos = () => {
               <td>{p.total}</td>
               <td>{p.estado}</td>
               <td>
-                <button className="btn btn-sm btn-outline-success me-2" onClick={() => handleCambiarEstado(p.id, 'ENVIADO')}>Marcar Enviado</button>
+                <button className="btn btn-sm btn-outline-success me-2" onClick={() => handleCambiarEstado(p.id, 'EN_CAMINO')}>Marcar Enviado</button>
                 <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}>Marcar Entregado</button>
                 <button className="btn btn-sm btn-outline-danger" onClick={() => handleCambiarEstado(p.id, 'CANCELADO')}>Cancelar</button>
               </td>

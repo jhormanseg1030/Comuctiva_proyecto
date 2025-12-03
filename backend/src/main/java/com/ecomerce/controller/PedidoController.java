@@ -137,9 +137,12 @@ public class PedidoController {
             Pedido pedido = pedidoService.actualizarEstadoPedido(pedidoId, estado);
             return ResponseEntity.ok(new PedidoDTO(pedido));
         } catch (RuntimeException e) {
+            // Log the error for debugging
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: " + e.getMessage()));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error: " + e.getMessage()));
         }

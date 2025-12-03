@@ -100,13 +100,4 @@ public class ProductoService {
         producto.setStock(producto.getStock() + cantidad);
         return productoRepository.save(producto);
     }
-
-    // Buscar productos por palabra clave (nombre o descripción)
-    public List<Producto> buscarProductos(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return obtenerProductosActivos();
-        }
-        String k = keyword.trim();
-        return productoRepository.findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(k, k);
-    }
 }

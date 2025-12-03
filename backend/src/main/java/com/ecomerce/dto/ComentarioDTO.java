@@ -2,6 +2,8 @@ package com.ecomerce.dto;
 
 import com.ecomerce.model.Comentario;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ComentarioDTO {
     private Long id;
@@ -12,6 +14,10 @@ public class ComentarioDTO {
     private String comentario;
     private Integer calificacion;
     private LocalDateTime fecha;
+    // Campos adicionales para compatibilidad con frontend
+    private String contenido;
+    private LocalDateTime fechaComentario;
+    private Map<String, String> usuario;
 
     public ComentarioDTO() {
     }
@@ -25,6 +31,14 @@ public class ComentarioDTO {
         this.comentario = comentario.getContenido();
         this.calificacion = comentario.getCalificacion();
         this.fecha = comentario.getFechaComentario();
+        // Compatibilidad: exponer los mismos campos que antes esperaba el frontend
+        this.contenido = comentario.getContenido();
+        this.fechaComentario = comentario.getFechaComentario();
+        this.usuario = new HashMap<>();
+        if (comentario.getUsuario() != null) {
+            this.usuario.put("nombre", comentario.getUsuario().getNombre());
+            this.usuario.put("numeroDocumento", comentario.getUsuario().getNumeroDocumento());
+        }
     }
 
     // Getters y Setters
@@ -91,4 +105,14 @@ public class ComentarioDTO {
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
     }
+
+    // Compatibilidad getters/setters
+    public String getContenido() { return contenido; }
+    public void setContenido(String contenido) { this.contenido = contenido; }
+
+    public LocalDateTime getFechaComentario() { return fechaComentario; }
+    public void setFechaComentario(LocalDateTime fechaComentario) { this.fechaComentario = fechaComentario; }
+
+    public Map<String, String> getUsuario() { return usuario; }
+    public void setUsuario(Map<String, String> usuario) { this.usuario = usuario; }
 }

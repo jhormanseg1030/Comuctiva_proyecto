@@ -178,9 +178,15 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
         // Validar y convertir estado
+        // Normalize input (trim, upper) and accept some common aliases
+        String normalized = nuevoEstado == null ? "" : nuevoEstado.trim().toUpperCase();
+        if (normalized.equals("ENVIADO") || normalized.equals("EN CAMINO") || normalized.equals("EN-CAMINO")) {
+            normalized = "EN_CAMINO";
+        }
+
         Pedido.EstadoPedido estadoPedido;
         try {
-            estadoPedido = Pedido.EstadoPedido.valueOf(nuevoEstado);
+            estadoPedido = Pedido.EstadoPedido.valueOf(normalized);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Estado no válido. Estados permitidos: PENDIENTE, CONFIRMADO, EN_CAMINO, ENTREGADO, CANCELADO");
         }

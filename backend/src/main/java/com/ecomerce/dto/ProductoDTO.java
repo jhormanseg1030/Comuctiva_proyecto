@@ -22,6 +22,8 @@ public class ProductoDTO {
     private Boolean activo;
     private LocalDateTime fechaPublicacion;
     private String imagenUrl;
+    private Double calificacionPromedio;
+    private Integer totalComentarios;
     
     // Información de la categoría
     private Long categoriaId;
