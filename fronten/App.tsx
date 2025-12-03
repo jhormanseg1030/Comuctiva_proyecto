@@ -9,6 +9,7 @@ import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import AccountScreen from './src/screens/AccountScreen';
 import CreateProductScreen from './src/screens/CreateProductScreen';
+import CartScreen from './src/screens/CartScreen';
 import UsuarioMenuScreen from './src/screens/UsuarioMenuScreen';
 
 const Stack = createNativeStackNavigator();
@@ -95,6 +96,10 @@ export default function App() {
           }}
         />
         <Stack.Screen
+          name="Cart"
+          component={CartScreen}
+          options={{
+            headerShown: false
           name="UsuarioMenuScreen"
           component={UsuarioMenuScreen}
           options={{
