@@ -146,7 +146,8 @@ public class ProductoController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> crearProducto(@Valid @RequestBody Producto producto) {
         Producto nuevoProducto = productoService.crearProducto(producto);
-        return ResponseEntity.ok(nuevoProducto);
+        // construir DTO para evitar serializar proxies perezosos fuera de sesión
+        return ResponseEntity.ok(new ProductoDTO(nuevoProducto));
     }
 
     @PostMapping(value = "/con-imagen", consumes = {"multipart/form-data"})
@@ -200,10 +201,12 @@ public class ProductoController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> actualizarProducto(@PathVariable Long id, @Valid @RequestBody Producto producto) {
         try {
             Producto productoActualizado = productoService.actualizarProducto(id, producto);
-            return ResponseEntity.ok(productoActualizado);
+            // devolver DTO construido dentro de la transacción para evitar LazyInitializationException
+            return ResponseEntity.ok(new ProductoDTO(productoActualizado));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
@@ -313,10 +316,11 @@ public class ProductoController {
 
     @PutMapping("/{id}/stock")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> actualizarStock(@PathVariable Long id, @RequestParam Integer cantidad) {
         try {
             Producto producto = productoService.actualizarStock(id, cantidad);
-            return ResponseEntity.ok(producto);
+            return ResponseEntity.ok(new ProductoDTO(producto));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

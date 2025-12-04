@@ -9,6 +9,9 @@ import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import AccountScreen from './src/screens/AccountScreen';
 import CreateProductScreen from './src/screens/CreateProductScreen';
+import CartScreen from './src/screens/CartScreen';
+import CheckoutScreen from './src/screens/CheckoutScreen';
+import UsuarioMenuScreen from './src/screens/UsuarioScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -88,6 +91,50 @@ export default function App() {
           component={CreateProductScreen}
           options={{
             title: 'Publicar producto',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="Cart"
+          component={CartScreen}
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="CheckoutScreen"
+          component={CheckoutScreen}
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="UsuarioMenuScreen"
+          component={UsuarioMenuScreen}
+          options={{
+            title: 'Perfil',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="MisProductos"
+          component={require('./src/screens/MisProductosScreen').default}
+          options={{
+            title: 'Mis Productos',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="EditarProducto"
+          component={require('./src/screens/EditarProductoScreen').default}
+          options={{
+            title: 'Editar Producto',
             headerStyle: { backgroundColor: '#22c55e' },
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: 'bold' },

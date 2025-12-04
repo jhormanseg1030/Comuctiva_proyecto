@@ -95,6 +95,7 @@ public class SubcategoriaController {
 
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> cambiarEstado(@PathVariable Long id, @RequestParam Boolean activo) {
         try {
             SubcategoriaDTO dto = subcategoriaService.cambiarEstadoDTO(id, activo);
