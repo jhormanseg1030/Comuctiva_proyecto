@@ -1,6 +1,7 @@
 package com.ecomerce.controller;
 
 import com.ecomerce.dto.MessageResponse;
+import com.ecomerce.dto.PromocionDTO;
 import com.ecomerce.model.Promocion;
 import com.ecomerce.service.PromocionService;
 import lombok.Data;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -25,6 +27,7 @@ public class PromocionController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> crearPromocion(@Valid @RequestBody PromocionRequest request) {
         try {
             Promocion promocion = new Promocion();
@@ -38,53 +41,75 @@ public class PromocionController {
                 request.getProductoId(),
                 request.getCreadorDocumento()
             );
-            return ResponseEntity.status(HttpStatus.CREATED).body(nuevaPromocion);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new PromocionDTO(nuevaPromocion));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<Promocion>> obtenerTodasPromociones() {
-        return ResponseEntity.ok(promocionService.obtenerTodasPromociones());
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PromocionDTO>> obtenerTodasPromociones() {
+        return ResponseEntity.ok(promocionService.obtenerTodasPromociones()
+                .stream()
+                .map(PromocionDTO::new)
+                .collect(java.util.stream.Collectors.toList()));
     }
 
     @GetMapping("/vigentes")
-    public ResponseEntity<List<Promocion>> obtenerPromocionesVigentes() {
-        return ResponseEntity.ok(promocionService.obtenerPromocionesVigentes());
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PromocionDTO>> obtenerPromocionesVigentes() {
+        return ResponseEntity.ok(promocionService.obtenerPromocionesVigentes()
+                .stream()
+                .map(PromocionDTO::new)
+                .collect(java.util.stream.Collectors.toList()));
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> obtenerPromocionPorId(@PathVariable Long id) {
         return promocionService.obtenerPromocionPorId(id)
-                .map(ResponseEntity::ok)
+                .map(p -> ResponseEntity.ok(new PromocionDTO(p)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/producto/{productoId}")
-    public ResponseEntity<List<Promocion>> obtenerPromocionesPorProducto(@PathVariable Long productoId) {
-        return ResponseEntity.ok(promocionService.obtenerPromocionesPorProducto(productoId));
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PromocionDTO>> obtenerPromocionesPorProducto(@PathVariable Long productoId) {
+        return ResponseEntity.ok(promocionService.obtenerPromocionesPorProducto(productoId)
+                .stream()
+                .map(PromocionDTO::new)
+                .collect(java.util.stream.Collectors.toList()));
     }
 
     @GetMapping("/producto/{productoId}/vigentes")
-    public ResponseEntity<List<Promocion>> obtenerPromocionesVigentesPorProducto(@PathVariable Long productoId) {
-        return ResponseEntity.ok(promocionService.obtenerPromocionesVigentesPorProducto(productoId));
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PromocionDTO>> obtenerPromocionesVigentesPorProducto(@PathVariable Long productoId) {
+        return ResponseEntity.ok(promocionService.obtenerPromocionesVigentesPorProducto(productoId)
+                .stream()
+                .map(PromocionDTO::new)
+                .collect(java.util.stream.Collectors.toList()));
     }
 
     @GetMapping("/creador/{numeroDocumento}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<Promocion>> obtenerPromocionesPorCreador(@PathVariable String numeroDocumento) {
-        return ResponseEntity.ok(promocionService.obtenerPromocionesPorCreador(numeroDocumento));
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PromocionDTO>> obtenerPromocionesPorCreador(@PathVariable String numeroDocumento) {
+        return ResponseEntity.ok(promocionService.obtenerPromocionesPorCreador(numeroDocumento)
+                .stream()
+                .map(PromocionDTO::new)
+                .collect(java.util.stream.Collectors.toList()));
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<?> actualizarPromocion(
+        @PutMapping("/{id}")
+        @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+        @Transactional
+        public ResponseEntity<?> actualizarPromocion(
             @PathVariable Long id,
-            @Valid @RequestBody Promocion promocion) {
+            @RequestBody Promocion promocion) {
         try {
             Promocion promocionActualizada = promocionService.actualizarPromocion(id, promocion);
-            return ResponseEntity.ok(promocionActualizada);
+            return ResponseEntity.ok(new PromocionDTO(promocionActualizada));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
@@ -92,10 +117,11 @@ public class PromocionController {
 
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> cambiarEstado(@PathVariable Long id, @RequestParam Boolean activo) {
         try {
             Promocion promocion = promocionService.cambiarEstado(id, activo);
-            return ResponseEntity.ok(promocion);
+            return ResponseEntity.ok(new PromocionDTO(promocion));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }

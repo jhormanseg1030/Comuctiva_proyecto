@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { authService } from '../services/api';
+import { authService, cartService } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginStyles } from '../styles/LoginStyles';
 import { Colors } from '../styles/GlobalStyles';
 import ComuctivaLogo from '../components/ComuctivaLogo';
@@ -33,6 +34,28 @@ export default function LoginScreen({ navigation }: any) {
         setError('No se recibió el token. Verifica las credenciales o el servidor.');
         return;
       }
+      // Migrar carrito local al backend si existe
+      try {
+        const savedCart = await AsyncStorage.getItem('cart');
+        if (savedCart) {
+          const localCart = JSON.parse(savedCart);
+          // Agregar cada item del carrito local al backend
+          for (const item of localCart) {
+            try {
+              await cartService.addToCart(item.id, item.cantidad);
+            } catch (cartError) {
+              console.warn('Error migrating cart item:', item.id, cartError);
+              // Continúa con los otros items aunque falle uno
+            }
+          }
+          // Limpiar carrito local después de migrar
+          await AsyncStorage.removeItem('cart');
+        }
+      } catch (cartMigrationError) {
+        console.warn('Error during cart migration:', cartMigrationError);
+        // No mostrar error al usuario, la migración es opcional
+      }
+
       // Obtener usuario guardado en AsyncStorage para mostrar nombre en Home
       const currentUser = await authService.getCurrentUser();
       const displayName = currentUser?.nombre ? `${currentUser.nombre} ${currentUser.apellido || ''}`.trim() : numeroDocumento;

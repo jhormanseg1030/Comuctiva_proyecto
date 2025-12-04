@@ -11,6 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { cartService, getFullUrl } from '../services/api';
 
 const cartStyles = StyleSheet.create({
   container: {
@@ -355,12 +356,47 @@ const cartStyles = StyleSheet.create({
 
 interface CartItem {
   id: number;
-  nombre: string;
-  precio: number;
-  imagen: string;
+  productoId?: number;
+  productoNombre?: string;
+  productoPrecio?: number;
+  productoImagenUrl?: string;
   cantidad: number;
+  productoDescripcion?: string;
+  subtotal?: number;
+  stockDisponible?: number;
+  usuarioDocumento?: string;
+  // Campos para compatibilidad con AsyncStorage local
+  nombre?: string;
+  precio?: number;
+  imagen?: string;
   descripcion?: string;
 }
+
+// Función helper para normalizar datos del carrito
+const normalizeCartItem = (item: any): CartItem => {
+  // Si viene del backend (tiene productoNombre)
+  if (item.productoNombre) {
+    return item;
+  }
+  // Si viene de AsyncStorage local (tiene nombre)
+  return {
+    id: item.id,
+    productoId: item.id,
+    productoNombre: item.nombre,
+    productoPrecio: item.precio,
+    productoImagenUrl: item.imagen,
+    cantidad: item.cantidad,
+    productoDescripcion: item.descripcion,
+    subtotal: item.precio * item.cantidad,
+    stockDisponible: 999, // Valor por defecto para local
+    usuarioDocumento: '',
+    // Mantener campos originales para compatibilidad
+    nombre: item.nombre,
+    precio: item.precio,
+    imagen: item.imagen,
+    descripcion: item.descripcion
+  };
+};
 
 const CartScreen = ({ navigation, route }: any) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -371,19 +407,41 @@ const CartScreen = ({ navigation, route }: any) => {
   
   // Obtener parámetros de navegación para saber si está logueado
   const isLoggedIn = route?.params?.isLoggedIn || false;
+  const userDocument = route?.params?.userDocument || '';
+  const userName = route?.params?.userName || '';
 
   useEffect(() => {
     loadCartItems();
   }, []);
 
   const loadCartItems = async () => {
-    try {
-      const savedCart = await AsyncStorage.getItem('cart');
-      if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
+    if (!isLoggedIn) {
+      // Si no está logueado, usar AsyncStorage local
+      try {
+        const savedCart = await AsyncStorage.getItem('cart');
+        if (savedCart) {
+          const localItems = JSON.parse(savedCart);
+          const normalizedItems = localItems.map(normalizeCartItem);
+          setCartItems(normalizedItems);
+        }
+      } catch (error) {
+        console.error('Error loading local cart:', error);
       }
+      return;
+    }
+
+    // Si está logueado, cargar desde el backend
+    try {
+      setLoading(true);
+      const response = await cartService.getCart();
+      const backendItems = response.data.items || [];
+      const normalizedItems = backendItems.map(normalizeCartItem);
+      setCartItems(normalizedItems);
     } catch (error) {
-      console.error('Error loading cart:', error);
+      console.error('Error loading cart from server:', error);
+      Alert.alert('Error', 'No se pudo cargar el carrito');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -393,12 +451,39 @@ const CartScreen = ({ navigation, route }: any) => {
       return;
     }
 
-    const updatedCart = cartItems.map(item =>
-      item.id === id ? { ...item, cantidad: newQuantity } : item
-    );
-    
-    setCartItems(updatedCart);
-    await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
+    if (!isLoggedIn) {
+      // Si no está logueado, usar AsyncStorage local
+      try {
+        const savedCart = await AsyncStorage.getItem('cart');
+        let cart = savedCart ? JSON.parse(savedCart) : [];
+        
+        cart = cart.map((item: any) =>
+          item.id === id ? { ...item, cantidad: newQuantity } : item
+        );
+        
+        await AsyncStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Actualizar el estado local
+        const normalizedItems = cart.map(normalizeCartItem);
+        setCartItems(normalizedItems);
+      } catch (error) {
+        console.error('Error updating local cart:', error);
+      }
+      return;
+    }
+
+    // Si está logueado, actualizar en el backend
+    try {
+      setLoading(true);
+      await cartService.updateCartItem(id, newQuantity);
+      // Recargar carrito para obtener datos actualizados
+      await loadCartItems();
+    } catch (error) {
+      console.error('Error updating cart item:', error);
+      Alert.alert('Error', 'No se pudo actualizar el producto');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const removeCartItem = (id: number) => {
@@ -407,12 +492,64 @@ const CartScreen = ({ navigation, route }: any) => {
   };
 
   const confirmDelete = async () => {
-    if (itemToDelete) {
-      const updatedCart = cartItems.filter(item => item.id !== itemToDelete);
-      setCartItems(updatedCart);
-      await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
-      setItemToDelete(null);
+    if (!itemToDelete) {
+      setShowDeleteDialog(false);
+      return;
     }
+
+    if (itemToDelete === 'all') {
+      // Limpiar todo el carrito
+      if (!isLoggedIn) {
+        // AsyncStorage local
+        setCartItems([]);
+        await AsyncStorage.removeItem('cart');
+      } else {
+        // Backend
+        try {
+          setLoading(true);
+          await cartService.clearCart();
+          setCartItems([]);
+        } catch (error) {
+          console.error('Error clearing cart:', error);
+          Alert.alert('Error', 'No se pudo vaciar el carrito');
+        } finally {
+          setLoading(false);
+        }
+      }
+    } else {
+      // Eliminar item específico
+      if (!isLoggedIn) {
+        // AsyncStorage local
+        try {
+          const savedCart = await AsyncStorage.getItem('cart');
+          let cart = savedCart ? JSON.parse(savedCart) : [];
+          
+          cart = cart.filter((item: any) => item.id !== itemToDelete);
+          
+          await AsyncStorage.setItem('cart', JSON.stringify(cart));
+          
+          // Actualizar el estado local
+          const normalizedItems = cart.map(normalizeCartItem);
+          setCartItems(normalizedItems);
+        } catch (error) {
+          console.error('Error removing from local cart:', error);
+        }
+      } else {
+        // Backend
+        try {
+          setLoading(true);
+          await cartService.removeFromCart(itemToDelete);
+          await loadCartItems();
+        } catch (error) {
+          console.error('Error removing cart item:', error);
+          Alert.alert('Error', 'No se pudo eliminar el producto');
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+    
+    setItemToDelete(null);
     setShowDeleteDialog(false);
   };
 
@@ -421,14 +558,13 @@ const CartScreen = ({ navigation, route }: any) => {
     setShowDeleteDialog(true);
   };
 
-  const confirmClearCart = async () => {
-    setCartItems([]);
-    await AsyncStorage.removeItem('cart');
-    setShowDeleteDialog(false);
-  };
+
 
   const calculateTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.precio * item.cantidad), 0);
+    return cartItems.reduce((total, item) => {
+      const price = item.productoPrecio || item.precio || 0;
+      return total + (price * item.cantidad);
+    }, 0);
   };
 
   const calculateItemsCount = () => {
@@ -442,22 +578,28 @@ const CartScreen = ({ navigation, route }: any) => {
     navigation.navigate('CheckoutScreen', { cartItems, total: calculateTotal() });
   };
 
-  const renderCartItem = (item: CartItem) => (
-    <View key={item.id} style={cartStyles.cartItem}>
-      <Image
-        source={{ uri: item.imagen }}
-        style={cartStyles.productImage}
-      />
-      
-      <View style={cartStyles.productInfo}>
-        <Text style={cartStyles.productName}>{item.nombre}</Text>
-        <Text style={cartStyles.productPrice}>${item.precio.toLocaleString()}</Text>
-        {item.descripcion && (
-          <Text style={cartStyles.productDescription} numberOfLines={2}>
-            {item.descripcion}
-          </Text>
-        )}
-      </View>
+  const renderCartItem = (item: CartItem) => {
+    const imageUrl = item.productoImagenUrl || item.imagen;
+    const name = item.productoNombre || item.nombre;
+    const price = item.productoPrecio || item.precio;
+    const description = item.productoDescripcion || item.descripcion;
+    
+    return (
+      <View key={item.id} style={cartStyles.cartItem}>
+        <Image
+          source={{ uri: getFullUrl(imageUrl) }}
+          style={cartStyles.productImage}
+        />
+        
+        <View style={cartStyles.productInfo}>
+          <Text style={cartStyles.productName}>{name}</Text>
+          <Text style={cartStyles.productPrice}>${price?.toLocaleString()}</Text>
+          {description && (
+            <Text style={cartStyles.productDescription} numberOfLines={2}>
+              {description}
+            </Text>
+          )}
+        </View>
 
       <View style={cartStyles.quantityContainer}>
         <TouchableOpacity
@@ -484,7 +626,8 @@ const CartScreen = ({ navigation, route }: any) => {
         <Text style={cartStyles.removeButtonText}>🗑️</Text>
       </TouchableOpacity>
     </View>
-  );
+    );
+  };
 
   const renderDeleteDialog = () => (
     <Modal
@@ -519,7 +662,7 @@ const CartScreen = ({ navigation, route }: any) => {
             
             <TouchableOpacity 
               style={cartStyles.modalConfirmButton}
-              onPress={itemToDelete === 'all' ? confirmClearCart : confirmDelete}
+              onPress={confirmDelete}
             >
               <Text style={cartStyles.modalConfirmText}>
                 {itemToDelete === 'all' ? 'VACIAR' : 'ELIMINAR'}
@@ -584,7 +727,11 @@ const CartScreen = ({ navigation, route }: any) => {
           </Text>
           <TouchableOpacity
             style={cartStyles.shopButton}
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.navigate('Home', {
+              isLoggedIn: isLoggedIn,
+              userDocument: userDocument,
+              userName: userName
+            })}
           >
             <Text style={cartStyles.shopButtonText}>Explorar productos</Text>
           </TouchableOpacity>
