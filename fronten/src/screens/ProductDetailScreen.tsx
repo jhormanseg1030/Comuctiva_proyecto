@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { View, Text, Image, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { productService } from '../services/api';
 import { getFullUrl } from '../services/api';
+import { authService } from '../services/api';
 
 const ProductDetailScreen = () => {
   const route = useRoute();
@@ -10,6 +11,14 @@ const ProductDetailScreen = () => {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [comentariosLoading, setComentariosLoading] = useState(true);
+  const [comentariosError, setComentariosError] = useState<string | null>(null);
+  const [nuevaCalificacion, setNuevaCalificacion] = useState(5);
+  const [nuevoComentario, setNuevoComentario] = useState('');
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     productService.getById(id)
@@ -21,7 +30,56 @@ const ProductDetailScreen = () => {
         setError('No se pudo cargar el producto');
         setLoading(false);
       });
+
+    // Obtener comentarios del producto
+    productService.getComentarios(id)
+      .then((res) => {
+        console.log('Comentarios recibidos:', res.data); // DEBUG
+        setComentarios(res.data.comentarios || []);
+        setComentariosLoading(false);
+      })
+      .catch((err) => {
+        console.log('Error al obtener comentarios:', err?.response?.data || err.message || err);
+        setComentariosError('No se pudieron cargar los comentarios');
+        setComentariosLoading(false);
+      });
   }, [id]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      authService.getCurrentUser().then(setUser);
+    }, [])
+  );
+
+  const handleEnviarComentario = async () => {
+    if (!nuevoComentario.trim()) {
+      setFormError('El comentario no puede estar vacío');
+      return;
+    }
+    setEnviandoComentario(true);
+    setFormError(null);
+    try {
+      // Ajusta el endpoint si es diferente en tu backend
+      await productService.crearComentario(id, {
+        calificacion: nuevaCalificacion,
+        comentario: nuevoComentario,
+      });
+      // Recargar comentarios
+      const res = await productService.getComentarios(id);
+      setComentarios(res.data);
+      setNuevoComentario('');
+      setNuevaCalificacion(5);
+    } catch (err) {
+      setFormError('No se pudo publicar la reseña');
+    }
+    setEnviandoComentario(false);
+  };
+
+  const handleCancelarComentario = () => {
+    setNuevoComentario('');
+    setNuevaCalificacion(5);
+    setFormError(null);
+  };
 
   if (loading) {
     return <ActivityIndicator size="large" style={{ flex: 1 }} />;
@@ -74,6 +132,70 @@ const ProductDetailScreen = () => {
         <TouchableOpacity style={styles.cartButton}>
           <Text style={styles.cartButtonText}>🛒 Agregar al carrito</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Comentarios de clientes */}
+      <View style={{ marginTop: 24 }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Reseñas de Clientes</Text>
+        {/* Formulario de nueva reseña solo si está logueado */}
+        {user && typeof user.numeroDocumento === 'string' && user.numeroDocumento.trim().length > 0 ? (
+          <View style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 14, marginBottom: 18 }}>
+            <Text style={{ fontWeight: 'bold', marginBottom: 6 }}>Calificación</Text>
+            <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+              {[1,2,3,4,5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setNuevaCalificacion(star)}>
+                  <Text style={{ fontSize: 28, color: star <= nuevaCalificacion ? '#fbbf24' : '#ddd' }}>★</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Comentario</Text>
+            <TextInput
+              style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, minHeight: 60, marginBottom: 10, borderWidth: 1, borderColor: '#eee' }}
+              placeholder="Cuéntanos tu experiencia con este producto..."
+              value={nuevoComentario}
+              onChangeText={setNuevoComentario}
+              multiline
+            />
+            {formError && <Text style={{ color: 'red', marginBottom: 8 }}>{formError}</Text>}
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-start' }}>
+              <TouchableOpacity
+                style={{ backgroundColor: '#22c55e', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginRight: 10 }}
+                onPress={handleEnviarComentario}
+                disabled={enviandoComentario}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Publicar Reseña</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: '#e5e7eb', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18 }}
+                onPress={handleCancelarComentario}
+                disabled={enviandoComentario}
+              >
+                <Text style={{ color: '#15803d', fontWeight: 'bold', fontSize: 16 }}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+        {/* Lista de comentarios */}
+        {comentariosLoading ? (
+          <ActivityIndicator size="small" />
+        ) : comentariosError ? (
+          <Text style={{ color: 'red' }}>{comentariosError}</Text>
+        ) : comentarios.length === 0 ? (
+          <Text style={{ color: '#555' }}>No hay comentarios para este producto.</Text>
+        ) : (
+          comentarios.map((comentario, idx) => (
+            <View key={idx} style={{ backgroundColor: '#f1f5f9', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
+                {comentario.usuarioNombre || 'Usuario'}
+              </Text>
+              <Text style={{ color: '#22c55e', fontWeight: 'bold', marginBottom: 2 }}>
+                {'★'.repeat(comentario.calificacion || 5)}
+              </Text>
+              <Text style={{ color: '#333', marginBottom: 4 }}>{comentario.comentario}</Text>
+              <Text style={{ fontSize: 12, color: '#888' }}>{comentario.fecha ? new Date(comentario.fecha).toLocaleDateString() : ''}</Text>
+            </View>
+          ))
+        )}
       </View>
     </ScrollView>
   );
