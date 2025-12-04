@@ -10,11 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/comentarios")
@@ -27,6 +27,7 @@ public class ComentarioController {
     // Crear comentario
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> crearComentario(
             @RequestBody ComentarioDTO comentarioDTO,
             Authentication authentication) {
@@ -85,6 +86,7 @@ public class ComentarioController {
     // Actualizar comentario
     @PutMapping("/{comentarioId}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> actualizarComentario(
             @PathVariable Long comentarioId,
             @RequestParam(required = false) String comentario,

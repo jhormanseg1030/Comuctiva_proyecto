@@ -72,17 +72,19 @@ public class SubcategoriaController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> crearSubcategoria(@Valid @RequestBody Subcategoria subcategoria) {
         Subcategoria nuevaSubcategoria = subcategoriaService.crearSubcategoria(subcategoria);
-        return ResponseEntity.ok(nuevaSubcategoria);
+        return ResponseEntity.ok(new SubcategoriaDTO(nuevaSubcategoria));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> actualizarSubcategoria(@PathVariable Long id, @Valid @RequestBody Subcategoria subcategoria) {
         try {
             Subcategoria subcategoriaActualizada = subcategoriaService.actualizarSubcategoria(id, subcategoria);
-            return ResponseEntity.ok(subcategoriaActualizada);
+            return ResponseEntity.ok(new SubcategoriaDTO(subcategoriaActualizada));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
@@ -90,10 +92,11 @@ public class SubcategoriaController {
 
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> cambiarEstado(@PathVariable Long id, @RequestParam Boolean activo) {
         try {
             Subcategoria subcategoria = subcategoriaService.cambiarEstado(id, activo);
-            return ResponseEntity.ok(subcategoria);
+            return ResponseEntity.ok(new SubcategoriaDTO(subcategoria));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
