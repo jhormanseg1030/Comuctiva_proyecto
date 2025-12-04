@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://192.168.137.4:8080/api'; // <-- Reemplaza por tu IP local
+const API_URL = 'http://192.168.0.8:8080/api'; // <-- Reemplaza por tu IP local
 // Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
@@ -19,10 +19,26 @@ api.interceptors.request.use(
     const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Token agregado al request:', config.url);
+    } else {
+      console.log('⚠️ No hay token disponible para:', config.url);
     }
     return config;
   },
   (error) => {
+    console.error('❌ Error en interceptor de request:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para manejar respuestas y errores
+api.interceptors.response.use(
+  (response) => {
+    console.log('✅ Respuesta exitosa:', response.config.url, response.status);
+    return response;
+  },
+  (error) => {
+    console.error('❌ Error en respuesta:', error.config?.url, error.response?.status, error.response?.data);
     return Promise.reject(error);
   }
 );
@@ -130,6 +146,41 @@ export const productService = {
 
 export const statsService = {
   getStats: () => api.get('/stats'),
+};
+
+// Servicios del carrito (backend)
+export const cartService = {
+  getCart: () => {
+    console.log('🔄 CartService: Obteniendo carrito');
+    return api.get('/carrito');
+  },
+  addToCart: (productoId: number, cantidad: number = 1) => {
+    console.log(`🔄 CartService: Agregando producto ${productoId}, cantidad: ${cantidad}`);
+    const url = `/carrito/agregar?productoId=${productoId}&cantidad=${cantidad}`;
+    console.log(`🔄 CartService: URL completa: ${API_URL}${url}`);
+    return api.post(url);
+  },
+  updateCartItem: (carritoId: number, cantidad: number) => {
+    console.log(`🔄 CartService: Actualizando item ${carritoId}, cantidad: ${cantidad}`);
+    return api.put(`/carrito/${carritoId}?cantidad=${cantidad}`);
+  },
+  removeFromCart: (carritoId: number) => {
+    console.log(`🔄 CartService: Eliminando item ${carritoId}`);
+    return api.delete(`/carrito/${carritoId}`);
+  },
+  clearCart: () => {
+    console.log('🔄 CartService: Limpiando carrito completo');
+    return api.delete('/carrito/vaciar');
+  },
+};
+
+// Servicios de pedidos
+export const pedidosService = {
+  getMisPedidos: () => api.get('/pedidos/mis-pedidos'),
+  getPedido: (id: number) => api.get(`/pedidos/${id}`),
+  crearPedido: (pedidoData: any) => 
+    api.post(`/pedidos/crear?direccionEnvio=${encodeURIComponent(pedidoData.direccionEntrega)}&metodoPago=${pedidoData.metodoPago}&costoFlete=${pedidoData.costoFlete || 0}`),
+  cancelarPedido: (id: number) => api.put(`/pedidos/${id}/cancelar`),
 };
 
 export default api;

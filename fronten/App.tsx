@@ -12,6 +12,7 @@ import CreateProductScreen from './src/screens/CreateProductScreen';
 import CartScreen from './src/screens/CartScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
 import UsuarioMenuScreen from './src/screens/UsuarioScreen';
+import MisPedidosScreen from './src/screens/MisPedidosScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -118,6 +119,13 @@ export default function App() {
             headerStyle: { backgroundColor: '#22c55e' },
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="MisPedidos"
+          component={MisPedidosScreen}
+          options={{
+            headerShown: false
           }}
         />
         <Stack.Screen

@@ -74,8 +74,8 @@ INSERT INTO productos (nombre, descripcion, precio, stock, fecha_cosecha, activo
 ('Piñas Gold', 'Piñas dulces y jugosas. Unidad', 6000.00, 20, '2024-11-08', 1, NOW(), 1, 2, '33333333', NULL),
 
 -- Productos inactivos
-('Aguacates Hass', 'Aguacates maduros. Unidad', 2500.00, 0, '2024-10-15', 0, NOW(), 1, 2, '11111111', NULL),
-('Pimentón Rojo', 'Pimentón rojo dulce. 500g', 3500.00, 15, '2024-11-16', 0, NOW(), 2, 8, '22222222', NULL);
+('Aguacates Hass', 'Aguacates maduros. Unidad', 2500.00, 15, '2024-10-15', 1, NOW(), 1, 2, '11111111', NULL),
+('Pimentón Rojo', 'Pimentón rojo dulce. 500g', 3500.00, 15, '2024-11-16', 1, NOW(), 2, 8, '22222222', NULL);
 
 -- ============================================
 -- 5. INSERTAR PROMOCIONES

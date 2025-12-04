@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Image, TouchableWithoutFeedback, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { productService, categoryService, getFullUrl, authService } from '../services/api';
+import { productService, categoryService, getFullUrl, authService, cartService } from '../services/api';
 import ComuctivaLogo from '../components/ComuctivaLogo';
 
 interface Producto {
@@ -12,6 +12,7 @@ interface Producto {
   descripcion: string;
   imagenUrl?: string;
   fechaPublicacion: string;
+  activo?: boolean;
 }
 interface Categoria {
   id: number;
@@ -141,30 +142,69 @@ const HomeScreen = ({ navigation, route }: any) => {
   };
 
   const addToCart = async (product: Producto) => {
-    if (!isLoggedIn) {
-      setShowLoginDialog(true);
-      return;
-    }
-
+    console.log('🛒 Intentando agregar al carrito:', product.nombre, 'ID:', product.id, 'Logueado:', isLoggedIn);
+    
     try {
-      const savedCart = await AsyncStorage.getItem('cart');
-      let cart = savedCart ? JSON.parse(savedCart) : [];
-      
-      const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
-      
-      if (existingItemIndex >= 0) {
-        cart[existingItemIndex].quantity += 1;
+      if (!isLoggedIn) {
+        // Para usuarios no logueados, usar AsyncStorage local
+        console.log('📦 Usando AsyncStorage local');
+        const savedCart = await AsyncStorage.getItem('cart');
+        let cart = savedCart ? JSON.parse(savedCart) : [];
+        
+        const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+        
+        if (existingItemIndex >= 0) {
+          cart[existingItemIndex].cantidad += 1;
+          console.log('✅ Producto existente, nueva cantidad:', cart[existingItemIndex].cantidad);
+        } else {
+          const newItem = { 
+            id: product.id,
+            nombre: product.nombre,
+            precio: product.precio,
+            imagen: product.imagenUrl,
+            cantidad: 1,
+            descripcion: product.descripcion 
+          };
+          cart.push(newItem);
+          console.log('✅ Nuevo producto agregado:', newItem);
+        }
+        
+        await AsyncStorage.setItem('cart', JSON.stringify(cart));
+        console.log('✅ Carrito guardado en AsyncStorage');
       } else {
-        cart.push({ ...product, quantity: 1 });
+        // Para usuarios logueados, usar el backend
+        console.log('🌐 Usando backend, llamando cartService.addToCart');
+        const response = await cartService.addToCart(product.id, 1);
+        console.log('✅ Respuesta del backend:', response?.data);
       }
-      
-      await AsyncStorage.setItem('cart', JSON.stringify(cart));
       
       // Mostrar dialog de confirmación
       setAddedProductName(product.nombre);
       setShowProductAddedDialog(true);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.log('✅ Producto agregado exitosamente:', product.nombre);
+    } catch (error: any) {
+      console.error('❌ Error adding to cart:', error);
+      console.error('❌ Error details:', error?.response?.data || error.message);
+      
+      // Manejar diferentes tipos de errores con mensajes más claros
+      if (error?.response?.data?.message) {
+        const errorMessage = error.response.data.message;
+        if (errorMessage.includes('no está disponible') || errorMessage.includes('not available')) {
+          Alert.alert(
+            'Producto no disponible', 
+            `${product.nombre} no está disponible en este momento. Por favor selecciona otro producto.`
+          );
+        } else if (errorMessage.includes('stock') || errorMessage.includes('Stock')) {
+          Alert.alert(
+            'Sin stock', 
+            `${product.nombre} no tiene stock disponible en este momento.`
+          );
+        } else {
+          Alert.alert('Error', `${product.nombre}: ${errorMessage}`);
+        }
+      } else {
+        Alert.alert('Error', `No se pudo agregar ${product.nombre} al carrito`);
+      }
     }
   };
 
@@ -246,7 +286,12 @@ const HomeScreen = ({ navigation, route }: any) => {
     <View style={styles.modernCard}>
       <TouchableOpacity
         activeOpacity={0.85}
-        onPress={() => navigation.navigate('ProductDetail', { id: item.id })}
+        onPress={() => navigation.navigate('ProductDetail', { 
+          id: item.id,
+          isLoggedIn: isLoggedIn,
+          userDocument: userDocument,
+          userName: userName
+        })}
       >
         <View style={styles.modernImageContainer}>
           {item.imagenUrl ? (
@@ -281,10 +326,19 @@ const HomeScreen = ({ navigation, route }: any) => {
         <Text style={styles.modernProductName} numberOfLines={2}>{item.nombre}</Text>
         <Text style={styles.modernProductPrice}>${item.precio.toLocaleString()}</Text>
         <TouchableOpacity 
-          style={styles.addToCartButton}
+          style={[
+            styles.addToCartButton,
+            item.activo === false && styles.disabledButton
+          ]}
           onPress={() => addToCart(item)}
+          disabled={item.activo === false}
         >
-          <Text style={styles.addToCartText}>Agregar al carrito</Text>
+          <Text style={[
+            styles.addToCartText,
+            item.activo === false && styles.disabledButtonText
+          ]}>
+            {item.activo === false ? 'No disponible' : 'Agregar al carrito'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -531,7 +585,11 @@ const HomeScreen = ({ navigation, route }: any) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigation.navigate('Cart', { isLoggedIn })}
+          onPress={() => navigation.navigate('Cart', { 
+            isLoggedIn, 
+            userDocument, 
+            userName 
+          })}
         >
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navLabel}>Carrito</Text>
@@ -915,6 +973,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  disabledButton: {
+    backgroundColor: '#9ca3af',
+    opacity: 0.7,
+  },
+  disabledButtonText: {
+    color: '#fff',
   },
   row: {
     justifyContent: 'space-between',
