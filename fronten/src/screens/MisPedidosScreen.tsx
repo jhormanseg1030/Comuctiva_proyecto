@@ -21,58 +21,109 @@ interface Pedido {
   productos: any[];
 }
 
-const MisPedidosScreen = ({ navigation }: any) => {
+const MisPedidosScreen = ({ navigation, route }: any) => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Obtener información del usuario desde los parámetros de navegación
+  const isLoggedIn = route?.params?.isLoggedIn || false;
+  const userDocument = route?.params?.userDocument || '';
+  const userName = route?.params?.userName || '';
 
   useEffect(() => {
-    loadPedidos();
+    console.log('Usuario logueado:', isLoggedIn);
+    console.log('Documento del usuario:', userDocument);
+    console.log('Nombre del usuario:', userName);
+    loadUserPedidos();
   }, []);
 
-  const loadPedidos = async () => {
+  const loadUserPedidos = async () => {
+    if (!isLoggedIn) {
+      navigation.navigate('Login');
+      return;
+    }
+    
+    setLoading(true);
     try {
-      setLoading(true);
+      // Verificar token y usuario antes de la petición
+      const token = await AsyncStorage.getItem('token');
+      const user = await AsyncStorage.getItem('user');
+      const userObj = user ? JSON.parse(user) : null;
       
-      // TODO: Descomentar cuando el backend esté listo
-      // const response = await pedidosService.getMisPedidos();
-      // setPedidos(response.data);
+      console.log('Token disponible:', token ? 'SÍ' : 'NO');
+      console.log('Usuario almacenado:', userObj);
+      console.log('Documento del usuario:', userObj?.numeroDocumento);
+      console.log('Parámetros de navegación - userDocument:', userDocument);
       
-      // Por ahora, usar datos mock para demostración
-      const mockPedidos: Pedido[] = [
-        {
-          id: 1,
-          fechaPedido: '2025-12-04T10:30:00Z',
-          estadoPedido: 'CONFIRMADO',
-          total: 28500,
-          direccionEntrega: 'Calle 123 #45-67, Bogotá',
-          metodoPago: 'efectivo',
-          productos: [
-            { nombre: 'Piñas Gold', cantidad: 2, precio: 9500 },
-            { nombre: 'Manzanas Rojas', cantidad: 1, precio: 9500 }
-          ]
-        },
-        {
-          id: 2,
-          fechaPedido: '2025-12-03T15:45:00Z',
-          estadoPedido: 'ENTREGADO',
-          total: 15000,
-          direccionEntrega: 'Recogido en tienda',
-          metodoPago: 'nequi',
-          productos: [
-            { nombre: 'Bananos Premium', cantidad: 3, precio: 5000 }
-          ]
-        }
-      ];
+      console.log('🔍 CONSULTANDO PEDIDOS PARA USUARIO:', userObj?.numeroDocumento || 'DESCONOCIDO');
       
-      setPedidos(mockPedidos);
-    } catch (error) {
-      console.error('Error loading pedidos:', error);
-      setError('No se pudieron cargar los pedidos');
+      const response = await pedidosService.getMisPedidos();
+      
+      console.log('📡 RESPUESTA COMPLETA DEL SERVIDOR:', response);
+      console.log('📋 DATOS RECIBIDOS:', response.data);
+      console.log('🔢 TIPO DE DATOS:', typeof response.data);
+      console.log('📏 CANTIDAD:', response.data?.length || 0);
+      console.log('✅ ES ARRAY?:', Array.isArray(response.data));
+      
+      if (response.data && response.data.length > 0) {
+        console.log('✅ PEDIDOS ENCONTRADOS:', response.data);
+      } else {
+        console.log('❌ RESPUESTA VACÍA O NULA');
+        console.log('🔍 Usuario consultado:', userObj?.numeroDocumento);
+        console.log('⚠️ El backend devuelve array vacío - no hay pedidos para este usuario');
+      }
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Adaptar los datos del backend al formato esperado por el frontend
+        const pedidosAdaptados = response.data.map((pedido: any) => ({
+          id: pedido.id,
+          fechaPedido: pedido.fechaPedido,
+          estadoPedido: pedido.estadoPedido,
+          total: pedido.total,
+          direccionEntrega: pedido.direccionEntrega,
+          metodoPago: pedido.metodoPago,
+          usuarioNombre: pedido.usuarioNombre,
+          usuarioDocumento: pedido.usuarioDocumento,
+          usuarioTelefono: pedido.usuarioTelefono,
+          usuarioEmail: pedido.usuarioEmail,
+          conFlete: pedido.conFlete,
+          costoFlete: pedido.costoFlete,
+          detalles: pedido.detalles,
+          productos: (pedido.detalles || []).map((detalle: any) => ({
+            nombre: detalle.nombreProducto || detalle.nombre || 'Producto',
+            cantidad: detalle.cantidad || 1,
+            precio: detalle.precio || detalle.precioUnitario || 0
+          }))
+        }));
+        
+        setPedidos(pedidosAdaptados);
+        console.log('✅ Pedidos adaptados y establecidos correctamente');
+      } else {
+        setPedidos([]);
+        console.log('No se recibieron pedidos válidos');
+      }
+      setError(null);
+    } catch (error: any) {
+      console.error('Error cargando pedidos:', error);
+      console.error('Status del error:', error.response?.status);
+      console.error('Mensaje del error:', error.response?.data);
+      
+      if (error.response?.status === 401) {
+        navigation.navigate('Login');
+      } else {
+        setError('Error al cargar pedidos');
+        setPedidos([]);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -128,7 +179,7 @@ const MisPedidosScreen = ({ navigation }: any) => {
     <View key={pedido.id} style={styles.pedidoCard}>
       <View style={styles.pedidoHeader}>
         <View>
-          <Text style={styles.pedidoId}>Pedido #{pedido.id}</Text>
+          <Text style={styles.pedidoId}>Pedido</Text>
           <Text style={styles.pedidoDate}>{formatDate(pedido.fechaPedido)}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(pedido.estadoPedido) }]}>
@@ -154,15 +205,18 @@ const MisPedidosScreen = ({ navigation }: any) => {
 
         <View style={styles.productosContainer}>
           <Text style={styles.label}>Productos:</Text>
-          {pedido.productos.map((producto, index) => (
+          {(pedido.productos || []).map((producto, index) => (
             <Text key={index} style={styles.producto}>
-              • {producto.nombre} (x{producto.cantidad}) - ${producto.precio.toLocaleString()}
+              • {producto.nombre || 'Producto'} (x{producto.cantidad || 1}) - ${(producto.precio || 0).toLocaleString()}
             </Text>
           ))}
         </View>
       </View>
 
-      <TouchableOpacity style={styles.verDetalleButton}>
+      <TouchableOpacity 
+        style={styles.verDetalleButton}
+        onPress={() => navigation.navigate('DetallePedido', { pedido })}
+      >
         <Text style={styles.verDetalleText}>Ver detalle</Text>
       </TouchableOpacity>
     </View>
@@ -188,7 +242,15 @@ const MisPedidosScreen = ({ navigation }: any) => {
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mis Pedidos</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={() => {
+            setLoading(true);
+            loadUserPedidos();
+          }}
+        >
+          <Text style={styles.refreshButtonText}>🔄</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -197,7 +259,7 @@ const MisPedidosScreen = ({ navigation }: any) => {
             <Text style={styles.errorIcon}>❌</Text>
             <Text style={styles.errorTitle}>Error</Text>
             <Text style={styles.errorMessage}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={loadPedidos}>
+            <TouchableOpacity style={styles.retryButton} onPress={loadUserPedidos}>
               <Text style={styles.retryText}>Reintentar</Text>
             </TouchableOpacity>
           </View>
@@ -206,30 +268,19 @@ const MisPedidosScreen = ({ navigation }: any) => {
             <Text style={styles.emptyIcon}>📦</Text>
             <Text style={styles.emptyTitle}>No tienes pedidos</Text>
             <Text style={styles.emptyMessage}>
-              Cuando realices tu primera compra, aparecerá aquí el historial de tus pedidos.
+              Cuando realices una compra, tus pedidos aparecerán aquí.
             </Text>
             <TouchableOpacity
               style={styles.shopButton}
-              onPress={async () => {
-                try {
-                  const user = await authService.getCurrentUser();
-                  if (user) {
-                    const displayName = user.nombre ? `${user.nombre} ${user.apellido || ''}`.trim() : user.numeroDocumento;
-                    navigation.navigate('Home', {
-                      isLoggedIn: true,
-                      userDocument: user.numeroDocumento,
-                      userName: displayName
-                    });
-                  } else {
-                    navigation.navigate('Home');
-                  }
-                } catch (error) {
-                  navigation.navigate('Home');
-                }
-              }}
+              onPress={() => navigation.navigate('Home', {
+                isLoggedIn: isLoggedIn,
+                userDocument: userDocument,
+                userName: userName
+              })}
             >
-              <Text style={styles.shopButtonText}>Explorar productos</Text>
+              <Text style={styles.shopButtonText}>Ir a comprar</Text>
             </TouchableOpacity>
+
           </View>
         ) : (
           <View style={styles.pedidosList}>
@@ -255,7 +306,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#22c55e',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
     shadowColor: '#000',
@@ -267,17 +318,57 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   backButtonText: {
     fontSize: 24,
-    color: '#16a34a',
+    color: '#fff',
     fontWeight: 'bold',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: '#fff',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 12,
+  },
+  statusDot: {
+    fontSize: 8,
+    marginRight: 4,
+  },
+  connectionStatusText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  refreshButtonText: {
+    fontSize: 18,
   },
   placeholder: {
     width: 40,

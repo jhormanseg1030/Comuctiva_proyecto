@@ -2,8 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://192.168.0.8:8080/api'; // <-- Reemplaza por tu IP local
-// Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
+// const API_URL = 'http://172.16.111.133:8080/api'; // Para dispositivo físico
+const API_URL = 'http://10.0.2.2:8080/api'; // Para emulador Android
 
 const api = axios.create({
   baseURL: API_URL,
@@ -141,7 +141,7 @@ export const productService = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   update: (id: number, data: any) => api.put(`/productos/${id}`, data),
-  delete: (id: number) => api.delete(`/products/${id}`),
+  delete: (id: number) => api.delete(`/productos/${id}`),
 };
 
 export const statsService = {

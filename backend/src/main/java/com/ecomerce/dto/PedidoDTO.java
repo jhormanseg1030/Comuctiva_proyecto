@@ -10,6 +10,8 @@ public class PedidoDTO {
     private Long id;
     private String usuarioDocumento;
     private String usuarioNombre;
+    private String usuarioTelefono;
+    private String usuarioEmail;
     private LocalDateTime fechaPedido;
     private String estadoPedido;
     private Double total;
@@ -26,6 +28,8 @@ public class PedidoDTO {
         this.id = pedido.getId();
         this.usuarioDocumento = pedido.getComprador().getNumeroDocumento();
         this.usuarioNombre = pedido.getComprador().getNombre() + " " + pedido.getComprador().getApellido();
+        this.usuarioTelefono = pedido.getComprador().getTelefono();
+        this.usuarioEmail = pedido.getComprador().getCorreo();
         this.fechaPedido = pedido.getFechaPedido();
         this.estadoPedido = pedido.getEstado().name();
         this.total = pedido.getTotal().doubleValue();
@@ -65,6 +69,22 @@ public class PedidoDTO {
 
     public void setUsuarioNombre(String usuarioNombre) {
         this.usuarioNombre = usuarioNombre;
+    }
+
+    public String getUsuarioTelefono() {
+        return usuarioTelefono;
+    }
+
+    public void setUsuarioTelefono(String usuarioTelefono) {
+        this.usuarioTelefono = usuarioTelefono;
+    }
+
+    public String getUsuarioEmail() {
+        return usuarioEmail;
+    }
+
+    public void setUsuarioEmail(String usuarioEmail) {
+        this.usuarioEmail = usuarioEmail;
     }
 
     public LocalDateTime getFechaPedido() {
