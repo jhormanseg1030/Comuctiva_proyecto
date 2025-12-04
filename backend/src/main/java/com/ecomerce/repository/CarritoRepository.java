@@ -20,4 +20,5 @@ public interface CarritoRepository extends JpaRepository<Carrito, Long> {
     void deleteByUsuarioNumeroDocumento(String numeroDocumento);
     Optional<Carrito> findByUsuarioAndProducto(com.ecomerce.model.Usuario usuario, com.ecomerce.model.Producto producto);
     void deleteByUsuario(com.ecomerce.model.Usuario usuario);
+    List<Carrito> findByProductoId(Long productoId);
 }

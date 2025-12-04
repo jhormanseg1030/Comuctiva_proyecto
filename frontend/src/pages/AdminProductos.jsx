@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Spinner, Modal } from 'react-bootstrap';
-import { getProductos, archiveImagenProducto, restoreImagenProducto, deleteImagenProducto, cambiarEstadoProducto } from '../services/api';
+import { getProductos, archiveImagenProducto, restoreImagenProducto, deleteImagenProducto, cambiarEstadoProducto, deleteProducto } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const AdminProductos = () => {
@@ -89,6 +89,23 @@ const AdminProductos = () => {
     }
   };
 
+  const handleDeleteProduct = async (id) => {
+    if (!isAdmin()) return alert('Acceso denegado');
+    if (!window.confirm('Esta acción eliminará el producto y sus datos de forma permanente. ¿Deseas continuar?')) return;
+    try {
+      setProcessingId(id);
+      // force delete: request backend to remove dependent records
+      await deleteProducto(id, true);
+      await loadProductos();
+    } catch (err) {
+      console.error('Error eliminando producto', err);
+      alert(err?.response?.data?.message || 'Error eliminando producto');
+    } finally {
+      setProcessingId(null);
+      setConfirm({ show: false, id: null });
+    }
+  };
+
   if (loading) return (<Container className="my-5 text-center">Cargando productos...</Container>);
 
   return (
@@ -135,12 +152,12 @@ const AdminProductos = () => {
                       {processingId===p.id ? <Spinner animation="border" size="sm" /> : 'Restaurar Imagen'}
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline-warning" onClick={() => handleArchive(p.id)} disabled={processingId===p.id}>
-                      {processingId===p.id ? <Spinner animation="border" size="sm"/> : 'Archivar Imagen'}
+                    <Button size="sm" variant="outline-warning" onClick={() => setConfirm({ show: true, id: p.id, type: 'product' })} disabled={processingId===p.id}>
+                      {processingId===p.id ? <Spinner animation="border" size="sm"/> : 'Eliminar Producto'}
                     </Button>
                   )}
 
-                  <Button size="sm" variant="outline-danger" onClick={() => setConfirm({ show: true, id: p.id })} disabled={processingId===p.id}>
+                  <Button size="sm" variant="outline-danger" onClick={() => setConfirm({ show: true, id: p.id, type: 'image' })} disabled={processingId===p.id}>
                     Eliminar Imagen
                   </Button>
                 </div>
@@ -156,14 +173,22 @@ const AdminProductos = () => {
 
       <Modal show={confirm.show} onHide={() => setConfirm({ show: false, id: null })} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Eliminar imagen</Modal.Title>
+          <Modal.Title>{confirm.type === 'product' ? 'Eliminar producto' : 'Eliminar imagen'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Esta acción eliminará la imagen del disco de forma permanente. ¿Deseas continuar?
+          {confirm.type === 'product' ? (
+            'Esta acción eliminará el producto y sus datos de forma permanente. ¿Deseas continuar?'
+          ) : (
+            'Esta acción eliminará la imagen del disco de forma permanente. ¿Deseas continuar?'
+          )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setConfirm({ show: false, id: null })}>Cancelar</Button>
-          <Button variant="danger" onClick={() => handleDelete(confirm.id)} disabled={processingId===confirm.id}>Eliminar</Button>
+          {confirm.type === 'product' ? (
+            <Button variant="danger" onClick={() => handleDeleteProduct(confirm.id)} disabled={processingId===confirm.id}>Eliminar</Button>
+          ) : (
+            <Button variant="danger" onClick={() => handleDelete(confirm.id)} disabled={processingId===confirm.id}>Eliminar</Button>
+          )}
         </Modal.Footer>
       </Modal>
     </Container>
