@@ -11,7 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authService, cartService } from '../services/api';
+import { authService, cartService, pedidosService } from '../services/api';
 
 const CheckoutScreen = ({ navigation, route }: any) => {
   const { cartItems = [], total = 0 } = route.params || {};
@@ -35,7 +35,7 @@ const CheckoutScreen = ({ navigation, route }: any) => {
     setShowErrorDialog(true);
   };
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
     if (!nombre.trim()) {
       showError('Por favor ingresa tu nombre completo');
       return;
@@ -49,7 +49,43 @@ const CheckoutScreen = ({ navigation, route }: any) => {
       return;
     }
 
-    setShowSuccessDialog(true);
+    try {
+      // Crear el pedido en el backend
+      console.log('🛒 Creando pedido en el backend...');
+      
+      const pedidoData = {
+        direccionEntrega: tipoEnvio === 'tienda' ? 'Recogido en tienda' : direccion,
+        metodoPago: metodoPago,
+        costoFlete: costoEnvio
+      };
+      
+      console.log('📦 Datos del pedido:', pedidoData);
+      
+      const response = await pedidosService.crearPedido(pedidoData);
+      console.log('✅ Pedido creado exitosamente:', response.data);
+      
+      // Limpiar el carrito después de crear el pedido
+      const isLoggedIn = route?.params?.isLoggedIn;
+      if (isLoggedIn) {
+        // Si está logueado, limpiar carrito del backend
+        await cartService.clearCart();
+      } else {
+        // Si es invitado, limpiar AsyncStorage
+        await AsyncStorage.removeItem('cart');
+      }
+      
+      setShowSuccessDialog(true);
+      
+    } catch (error: any) {
+      console.error('❌ Error creando pedido:', error);
+      console.error('Error details:', error.response?.data);
+      
+      if (error.response?.status === 401) {
+        showError('Sesión expirada. Por favor inicia sesión nuevamente.');
+      } else {
+        showError(error.response?.data?.message || 'Error al procesar el pedido. Intenta nuevamente.');
+      }
+    }
   };
 
   const renderErrorDialog = () => (

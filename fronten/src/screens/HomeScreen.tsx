@@ -144,39 +144,18 @@ const HomeScreen = ({ navigation, route }: any) => {
   const addToCart = async (product: Producto) => {
     console.log('🛒 Intentando agregar al carrito:', product.nombre, 'ID:', product.id, 'Logueado:', isLoggedIn);
     
+    // Verificar si el usuario está logueado
+    if (!isLoggedIn) {
+      console.log('❌ Usuario no logueado, mostrando dialog de login');
+      setShowLoginDialog(true);
+      return;
+    }
+
     try {
-      if (!isLoggedIn) {
-        // Para usuarios no logueados, usar AsyncStorage local
-        console.log('📦 Usando AsyncStorage local');
-        const savedCart = await AsyncStorage.getItem('cart');
-        let cart = savedCart ? JSON.parse(savedCart) : [];
-        
-        const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
-        
-        if (existingItemIndex >= 0) {
-          cart[existingItemIndex].cantidad += 1;
-          console.log('✅ Producto existente, nueva cantidad:', cart[existingItemIndex].cantidad);
-        } else {
-          const newItem = { 
-            id: product.id,
-            nombre: product.nombre,
-            precio: product.precio,
-            imagen: product.imagenUrl,
-            cantidad: 1,
-            descripcion: product.descripcion 
-          };
-          cart.push(newItem);
-          console.log('✅ Nuevo producto agregado:', newItem);
-        }
-        
-        await AsyncStorage.setItem('cart', JSON.stringify(cart));
-        console.log('✅ Carrito guardado en AsyncStorage');
-      } else {
-        // Para usuarios logueados, usar el backend
-        console.log('🌐 Usando backend, llamando cartService.addToCart');
-        const response = await cartService.addToCart(product.id, 1);
-        console.log('✅ Respuesta del backend:', response?.data);
-      }
+      // Para usuarios logueados, usar el backend
+      console.log('🌐 Usando backend, llamando cartService.addToCart');
+      const response = await cartService.addToCart(product.id, 1);
+      console.log('✅ Respuesta del backend:', response?.data);
       
       // Mostrar dialog de confirmación
       setAddedProductName(product.nombre);
@@ -348,28 +327,52 @@ const HomeScreen = ({ navigation, route }: any) => {
     <Modal
       visible={showLoginDialog}
       transparent={true}
-      animationType="fade"
+      animationType="slide"
       onRequestClose={() => setShowLoginDialog(false)}
     >
       <View style={styles.dialogOverlay}>
         <View style={styles.loginDialogContainer}>
           <View style={styles.loginDialogHeader}>
-            <Text style={styles.loginDialogIcon}>🔒</Text>
-            <Text style={styles.loginDialogTitle}>Iniciar sesión requerida</Text>
+            <View style={styles.iconContainer}>
+              <Text style={styles.loginDialogIcon}>🛒</Text>
+              <View style={styles.iconGlow} />
+            </View>
+            <Text style={styles.loginDialogTitle}>¡Únete a nosotros!</Text>
+            <Text style={styles.loginDialogSubtitle}>Crea tu cuenta o inicia sesión para continuar</Text>
           </View>
           
           <View style={styles.loginDialogContent}>
             <Text style={styles.loginDialogMessage}>
-              Para agregar productos al carrito inicia sesión
+              Para agregar productos a tu carrito necesitas tener una cuenta.
+              ¡Es rápido y fácil!
             </Text>
+            
+            <View style={styles.benefitsContainer}>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitIcon}>✨</Text>
+                <Text style={styles.benefitText}>Guarda tus favoritos</Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitIcon}>🚀</Text>
+                <Text style={styles.benefitText}>Compras más rápidas</Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitIcon}>💝</Text>
+                <Text style={styles.benefitText}>Ofertas exclusivas</Text>
+              </View>
+            </View>
           </View>
 
-          <View style={styles.loginDialogButtons}>
+          <View style={styles.loginDialogActions}>
             <TouchableOpacity
-              style={styles.loginDialogCancelButton}
-              onPress={() => setShowLoginDialog(false)}
+              style={styles.loginDialogRegisterButton}
+              onPress={() => {
+                setShowLoginDialog(false);
+                navigation.navigate('Register');
+              }}
             >
-              <Text style={styles.loginDialogCancelText}>CANCELAR</Text>
+              <Text style={styles.loginDialogRegisterText}>Crear cuenta</Text>
+              <Text style={styles.buttonSubtext}>¡Es gratis!</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -379,7 +382,14 @@ const HomeScreen = ({ navigation, route }: any) => {
                 navigation.navigate('Login');
               }}
             >
-              <Text style={styles.loginDialogLoginText}>INICIAR SESIÓN</Text>
+              <Text style={styles.loginDialogLoginText}>Ya tengo cuenta</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.loginDialogCancelButton}
+              onPress={() => setShowLoginDialog(false)}
+            >
+              <Text style={styles.loginDialogCancelText}>Tal vez después</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1094,88 +1104,154 @@ const styles = StyleSheet.create({
   // Estilos para dialogs
   dialogOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   // Login Dialog Styles
   loginDialogContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
     margin: 20,
-    width: '85%',
-    maxWidth: 350,
+    width: '90%',
+    maxWidth: 380,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 15,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 35,
+    elevation: 20,
+    overflow: 'hidden',
   },
   loginDialogHeader: {
     alignItems: 'center',
-    paddingTop: 25,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#fee2e2',
+    paddingTop: 32,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: 0,
+  },
+  iconContainer: {
+    position: 'relative',
+    marginBottom: 16,
   },
   loginDialogIcon: {
-    fontSize: 50,
-    marginBottom: 10,
-  },
-  loginDialogTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#374151',
+    fontSize: 48,
     textAlign: 'center',
   },
+  iconGlow: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderRadius: 50,
+    zIndex: -1,
+  },
+  loginDialogTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    textAlign: 'center',
+    marginBottom: 6,
+    letterSpacing: -0.5,
+  },
+  loginDialogSubtitle: {
+    fontSize: 15,
+    color: '#6b7280',
+    textAlign: 'center',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
   loginDialogContent: {
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
     alignItems: 'center',
   },
   loginDialogMessage: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#4b5563',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    fontWeight: '400',
+    marginBottom: 20,
+  },
+  benefitsContainer: {
+    width: '100%',
+    gap: 12,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#22c55e',
+  },
+  benefitIcon: {
+    fontSize: 18,
+    marginRight: 12,
+  },
+  benefitText: {
+    fontSize: 14,
+    color: '#374151',
     fontWeight: '500',
   },
-  loginDialogButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    gap: 10,
+  loginDialogActions: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 12,
   },
-  loginDialogCancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+  loginDialogRegisterButton: {
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    backgroundColor: '#22c55e',
+    shadowColor: '#16a34a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  loginDialogCancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6b7280',
+  loginDialogRegisterText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+  buttonSubtext: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+    marginTop: 2,
   },
   loginDialogLoginButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: '#3b82f6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
   },
   loginDialogLoginText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '600',
+    color: '#475569',
+  },
+  loginDialogCancelButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  loginDialogCancelText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#9ca3af',
   },
   // Product Added Dialog Styles
   productAddedDialogContainer: {

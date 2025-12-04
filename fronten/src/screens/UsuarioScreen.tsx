@@ -6,7 +6,11 @@ import { StackNavigationProp } from '@react-navigation/stack';
 // Define las rutas que usas en la navegación
 export type UsuarioMenuStackParamList = {
   Account: undefined;
-  MisPedidos: undefined;
+  MisPedidos: {
+    isLoggedIn: boolean;
+    userDocument: string;
+    userName: string;
+  };
   CreateProduct: undefined;
   MisProductos: undefined;
   MisVentas: undefined;
@@ -66,7 +70,11 @@ const UsuarioMenuScreen: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Account')}>
           <Text style={styles.menuText}>Mi Cuenta</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MisPedidos')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MisPedidos', {
+          isLoggedIn: true,
+          userDocument: user?.documento || user?.username || '',
+          userName: user?.nombre || user?.username || ''
+        })}>
           <Text style={styles.menuText}>Mis Pedidos</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('CreateProduct')}>
