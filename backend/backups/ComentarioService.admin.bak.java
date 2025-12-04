@@ -7,11 +7,6 @@ import com.ecomerce.model.Usuario;
 import com.ecomerce.repository.ComentarioRepository;
 import com.ecomerce.repository.ProductoRepository;
 import com.ecomerce.repository.UsuarioRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,37 +57,6 @@ public class ComentarioService {
         return comentarioRepository.save(nuevoComentario);
     }
 
-    // Listar comentarios para administración con filtros y paginación
-    @Transactional(readOnly = true)
-    public Page<ComentarioDTO> buscarComentariosAdmin(Integer page, Integer size, Boolean activo,
-                                                      Long productoId, String usuarioDocumento, String q) {
-        int p = (page != null && page >= 0) ? page : 0;
-        int s = (size != null && size > 0) ? size : 20;
-        Pageable pageable = PageRequest.of(p, s, Sort.by(Sort.Direction.DESC, "fechaComentario"));
-
-        if (activo == null) {
-            activo = true; // por defecto mostrar activos
-        }
-
-        Page<Comentario> pageResult;
-
-        if (q != null && !q.trim().isEmpty()) {
-            pageResult = comentarioRepository.findByContenidoContainingIgnoreCaseAndActivo(q.trim(), activo, pageable);
-        } else if (productoId != null) {
-            pageResult = comentarioRepository.findByProductoIdAndActivo(productoId, activo, pageable);
-        } else if (usuarioDocumento != null && !usuarioDocumento.trim().isEmpty()) {
-            pageResult = comentarioRepository.findByUsuarioNumeroDocumentoAndActivo(usuarioDocumento.trim(), activo, pageable);
-        } else {
-            pageResult = comentarioRepository.findByActivo(activo, pageable);
-        }
-
-        java.util.List<ComentarioDTO> dtos = pageResult.getContent().stream()
-                .map(ComentarioDTO::new)
-                .collect(java.util.stream.Collectors.toList());
-
-        return new PageImpl<>(dtos, pageable, pageResult.getTotalElements());
-    }
-
     // Obtener comentarios de un producto (devuelve DTOs para evitar LazyInitialization)
     @Transactional(readOnly = true)
     public List<ComentarioDTO> obtenerComentariosPorProducto(Long productoId) {
@@ -141,15 +105,6 @@ public class ComentarioService {
         if (!comentario.getUsuario().getNumeroDocumento().equals(numeroDocumento)) {
             throw new RuntimeException("No tienes permiso para eliminar este comentario");
         }
-
-        comentario.setActivo(false);
-        comentarioRepository.save(comentario);
-    }
-
-    // Eliminar comentario como ADMIN (soft-delete)
-    public void eliminarComentarioPorAdmin(Long comentarioId) {
-        Comentario comentario = comentarioRepository.findById(comentarioId)
-                .orElseThrow(() -> new RuntimeException("Comentario no encontrado"));
 
         comentario.setActivo(false);
         comentarioRepository.save(comentario);

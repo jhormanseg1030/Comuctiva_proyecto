@@ -2,7 +2,6 @@ package com.ecomerce.controller;
 
 import com.ecomerce.dto.MessageResponse;
 import com.ecomerce.dto.SubcategoriaDTO;
-import com.ecomerce.dto.SubcategoriaRequest;
 import com.ecomerce.model.Subcategoria;
 import com.ecomerce.service.SubcategoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,21 +72,17 @@ public class SubcategoriaController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> crearSubcategoria(@Valid @RequestBody SubcategoriaRequest request) {
-        try {
-            SubcategoriaDTO dto = subcategoriaService.crearSubcategoriaDesdeRequest(request);
-            return ResponseEntity.ok(dto);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
-        }
+    public ResponseEntity<?> crearSubcategoria(@Valid @RequestBody Subcategoria subcategoria) {
+        Subcategoria nuevaSubcategoria = subcategoriaService.crearSubcategoria(subcategoria);
+        return ResponseEntity.ok(nuevaSubcategoria);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> actualizarSubcategoria(@PathVariable Long id, @Valid @RequestBody SubcategoriaRequest request) {
+    public ResponseEntity<?> actualizarSubcategoria(@PathVariable Long id, @Valid @RequestBody Subcategoria subcategoria) {
         try {
-            SubcategoriaDTO dto = subcategoriaService.actualizarSubcategoriaDesdeRequest(id, request);
-            return ResponseEntity.ok(dto);
+            Subcategoria subcategoriaActualizada = subcategoriaService.actualizarSubcategoria(id, subcategoria);
+            return ResponseEntity.ok(subcategoriaActualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
@@ -97,8 +92,8 @@ public class SubcategoriaController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> cambiarEstado(@PathVariable Long id, @RequestParam Boolean activo) {
         try {
-            SubcategoriaDTO dto = subcategoriaService.cambiarEstadoDTO(id, activo);
-            return ResponseEntity.ok(dto);
+            Subcategoria subcategoria = subcategoriaService.cambiarEstado(id, activo);
+            return ResponseEntity.ok(subcategoria);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

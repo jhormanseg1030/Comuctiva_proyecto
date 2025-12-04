@@ -19,7 +19,6 @@ public interface ComentarioRepository extends JpaRepository<Comentario, Long> {
     boolean existsByProductoAndUsuario(Producto producto, Usuario usuario);
     int countByProductoIdAndActivo(Long productoId, Boolean activo);
 
-    // Methods with pagination and for admin listing/filtering
     Page<Comentario> findByActivo(Boolean activo, Pageable pageable);
     Page<Comentario> findByProductoIdAndActivo(Long productoId, Boolean activo, Pageable pageable);
     Page<Comentario> findByUsuarioNumeroDocumentoAndActivo(String numeroDocumento, Boolean activo, Pageable pageable);

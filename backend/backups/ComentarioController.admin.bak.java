@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,17 +28,15 @@ public class ComentarioController {
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> crearComentario(
-            @RequestBody ComentarioDTO comentarioDTO,
+            @RequestParam Long productoId,
+            @RequestParam String comentario,
+            @RequestParam Integer calificacion,
             Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            Long productoId = comentarioDTO.getProductoId();
-            String comentario = comentarioDTO.getComentario();
-            Integer calificacion = comentarioDTO.getCalificacion();
-
             Comentario nuevoComentario = comentarioService.crearComentario(
                     productoId, numeroDocumento, comentario, calificacion);
-
+            
             return ResponseEntity.status(HttpStatus.CREATED).body(new ComentarioDTO(nuevoComentario));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -54,8 +51,12 @@ public class ComentarioController {
     @GetMapping("/producto/{productoId}")
     public ResponseEntity<?> obtenerComentariosPorProducto(@PathVariable Long productoId) {
         try {
-            List<ComentarioDTO> comentariosDTO = comentarioService.obtenerComentariosPorProducto(productoId);
+            List<Comentario> comentarios = comentarioService.obtenerComentariosPorProducto(productoId);
             Double promedioCalificacion = comentarioService.calcularPromedioCalificacion(productoId);
+            
+            List<ComentarioDTO> comentariosDTO = comentarios.stream()
+                    .map(ComentarioDTO::new)
+                    .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
             response.put("comentarios", comentariosDTO);
@@ -75,7 +76,12 @@ public class ComentarioController {
     public ResponseEntity<?> obtenerMisComentarios(Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            List<ComentarioDTO> comentariosDTO = comentarioService.obtenerComentariosPorUsuario(numeroDocumento);
+            List<Comentario> comentarios = comentarioService.obtenerComentariosPorUsuario(numeroDocumento);
+            
+            List<ComentarioDTO> comentariosDTO = comentarios.stream()
+                    .map(ComentarioDTO::new)
+                    .collect(Collectors.toList());
+
             return ResponseEntity.ok(comentariosDTO);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -123,47 +129,6 @@ public class ComentarioController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error: " + e.getMessage()));
-        }
-    }
-
-    // Admin: listar comentarios con filtros y paginación
-    @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> listarComentariosAdmin(
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) Boolean activo,
-            @RequestParam(required = false) Long productoId,
-            @RequestParam(required = false) String usuarioDocumento,
-            @RequestParam(required = false) String q) {
-        try {
-            Page<com.ecomerce.dto.ComentarioDTO> resultados = comentarioService.buscarComentariosAdmin(page, size, activo, productoId, usuarioDocumento, q);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("comentarios", resultados.getContent());
-            response.put("totalElements", resultados.getTotalElements());
-            response.put("totalPages", resultados.getTotalPages());
-            response.put("page", resultados.getNumber());
-            response.put("size", resultados.getSize());
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Error: " + e.getMessage()));
-        }
-    }
-
-    // Admin: eliminar comentario (soft-delete)
-    @DeleteMapping("/admin/{comentarioId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> eliminarComentarioAdmin(@PathVariable Long comentarioId) {
-        try {
-            comentarioService.eliminarComentarioPorAdmin(comentarioId);
-            return ResponseEntity.ok(new MessageResponse("Comentario eliminado por admin"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error: " + e.getMessage()));
         }
     }
 }

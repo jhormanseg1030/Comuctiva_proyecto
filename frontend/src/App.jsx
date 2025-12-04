@@ -30,7 +30,10 @@ import AdminUsuarios from './pages/AdminUsuarios';
 import AdminPedidos from './pages/AdminPedidos';
 import AdminLayout from './pages/AdminLayout';
 import AdminAuditoria from './pages/AdminAuditoria';
+import AdminSubcategorias from './pages/AdminSubcategorias';
 import AdminProductos from './pages/AdminProductos';
+import AdminModeracion from './pages/AdminModeracion';
+import AdminCategorias from './pages/AdminCategorias';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -105,6 +108,8 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
+              <Route path="categorias" element={<AdminCategorias/>} />
+              <Route path="subcategorias" element={<AdminSubcategorias/>} />
             <Route 
               path="/mis-ventas" 
               element={
@@ -125,6 +130,9 @@ function AppContent() {
               <Route index element={<AdminDashboard/>} />
               <Route path="usuarios" element={<AdminUsuarios/>} />
               <Route path="productos" element={<AdminProductos/>} />
+              <Route path="subcategorias" element={<AdminSubcategorias/>} />
+              <Route path="categorias" element={<AdminCategorias/>} />
+              <Route path="moderacion" element={<AdminModeracion/>} />
               <Route path="pedidos" element={<AdminPedidos/>} />
               <Route path="auditoria" element={<AdminAuditoria/>} />
             </Route>

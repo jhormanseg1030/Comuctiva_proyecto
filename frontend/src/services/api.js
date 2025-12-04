@@ -43,11 +43,19 @@ export const register = (userData) => api.post('/auth/register', userData);
 // Categorías
 export const getCategorias = () => api.get('/categorias');
 export const getCategoria = (id) => api.get(`/categorias/${id}`);
+export const createCategoria = (data) => api.post('/categorias', data);
+export const updateCategoria = (id, data) => api.put(`/categorias/${id}`, data);
+export const changeEstadoCategoria = (id, activo) => api.put(`/categorias/${id}/estado?activo=${activo}`);
+export const deleteCategoria = (id) => api.delete(`/categorias/${id}`);
 
 // Subcategorías
 export const getSubcategorias = () => api.get('/subcategorias');
 export const getSubcategoria = (id) => api.get(`/subcategorias/${id}`);
 export const getSubcategoriasByCategoria = (categoriaId) => api.get(`/subcategorias/categoria/${categoriaId}`);
+export const createSubcategoria = (data) => api.post('/subcategorias', data);
+export const updateSubcategoria = (id, data) => api.put(`/subcategorias/${id}`, data);
+export const changeEstadoSubcategoria = (id, activo) => api.put(`/subcategorias/${id}/estado?activo=${activo}`);
+export const deleteSubcategoria = (id) => api.delete(`/subcategorias/${id}`);
 
 // Productos
 export const getProductos = () => api.get('/productos');
@@ -103,6 +111,9 @@ export const getComentariosByProducto = (productoId) => api.get(`/comentarios/pr
 export const createComentario = (comentarioData) => api.post('/comentarios', comentarioData);
 export const updateComentario = (id, comentarioData) => api.put(`/comentarios/${id}`, comentarioData);
 export const deleteComentario = (id) => api.delete(`/comentarios/${id}`);
+// Admin - moderación
+export const getComentariosAdmin = (params) => api.get('/comentarios/admin', { params });
+export const deleteComentarioAdmin = (id) => api.delete(`/comentarios/admin/${id}`);
 
 // Usuario
 export const getUsuario = (numeroDocumento) => api.get(`/usuarios/${numeroDocumento}`);

@@ -16,4 +16,5 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<Producto> findBySubcategoriaIdAndActivo(Long subcategoriaId, Boolean activo);
     // Búsqueda por nombre o descripción (case-insensitive)
     List<Producto> findByNombreContainingIgnoreCaseOrDescripcionContainingIgnoreCase(String nombre, String descripcion);
+    int countBySubcategoriaId(Long subcategoriaId);
 }
