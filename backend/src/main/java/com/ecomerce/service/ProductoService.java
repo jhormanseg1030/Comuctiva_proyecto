@@ -4,10 +4,22 @@ import com.ecomerce.model.Categoria;
 import com.ecomerce.model.Producto;
 import com.ecomerce.model.Subcategoria;
 import com.ecomerce.model.Usuario;
+import com.ecomerce.model.Comentario;
+import com.ecomerce.model.Promocion;
+import com.ecomerce.model.Carrito;
+import com.ecomerce.model.DetallePedido;
+import com.ecomerce.model.Compra;
+import com.ecomerce.model.Venta;
 import com.ecomerce.repository.CategoriaRepository;
 import com.ecomerce.repository.ProductoRepository;
 import com.ecomerce.repository.SubcategoriaRepository;
 import com.ecomerce.repository.UsuarioRepository;
+import com.ecomerce.repository.ComentarioRepository;
+import com.ecomerce.repository.PromocionRepository;
+import com.ecomerce.repository.CarritoRepository;
+import com.ecomerce.repository.DetallePedidoRepository;
+import com.ecomerce.repository.CompraRepository;
+import com.ecomerce.repository.VentaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +41,27 @@ public class ProductoService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private ComentarioRepository comentarioRepository;
+
+    @Autowired
+    private PromocionRepository promocionRepository;
+
+    @Autowired
+    private CarritoRepository carritoRepository;
+
+    @Autowired
+    private DetallePedidoRepository detallePedidoRepository;
+
+    @Autowired
+    private CompraRepository compraRepository;
+
+    @Autowired
+    private VentaRepository ventaRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     public Producto crearProducto(Producto producto) {
         return productoRepository.save(producto);
@@ -100,8 +133,65 @@ public class ProductoService {
         return productoRepository.save(producto);
     }
 
-    public void eliminarProducto(Long id) {
-        productoRepository.deleteById(id);
+    public void eliminarProducto(Long id, boolean force) {
+        Producto producto = productoRepository.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        // Si no es force: mantener comportamiento conservador y rechazar si existen registros históricos
+        List<DetallePedido> detalles = detallePedidoRepository.findByProductoId(id);
+        List<Compra> compras = compraRepository.findByProductoId(id);
+        List<Venta> ventas = ventaRepository.findByProductoId(id);
+
+        if (!force) {
+            if (detalles != null && !detalles.isEmpty()) {
+                throw new RuntimeException("No se puede eliminar el producto: existen detalles de pedido asociados. Desactívelo en su lugar.");
+            }
+            if (compras != null && !compras.isEmpty()) {
+                throw new RuntimeException("No se puede eliminar el producto: existen compras asociadas. Desactívelo en su lugar.");
+            }
+            if (ventas != null && !ventas.isEmpty()) {
+                throw new RuntimeException("No se puede eliminar el producto: existen ventas asociadas. Desactívelo en su lugar.");
+            }
+        } else {
+            // Force delete: eliminar dependencias en orden seguro
+            if (detalles != null && !detalles.isEmpty()) {
+                detallePedidoRepository.deleteAll(detalles);
+            }
+            if (ventas != null && !ventas.isEmpty()) {
+                ventaRepository.deleteAll(ventas);
+            }
+            if (compras != null && !compras.isEmpty()) {
+                compraRepository.deleteAll(compras);
+            }
+        }
+
+        // Eliminar referencias no críticas: carrito, comentarios, promociones
+        List<Carrito> carritos = carritoRepository.findByProductoId(id);
+        if (carritos != null && !carritos.isEmpty()) {
+            carritoRepository.deleteAll(carritos);
+        }
+
+        List<Comentario> comentarios = comentarioRepository.findByProductoId(id);
+        if (comentarios != null && !comentarios.isEmpty()) {
+            comentarioRepository.deleteAll(comentarios);
+        }
+
+        List<Promocion> promos = promocionRepository.findByProductoId(id);
+        if (promos != null && !promos.isEmpty()) {
+            promocionRepository.deleteAll(promos);
+        }
+
+        // Eliminar fichero de imagen asociado si existe
+        if (producto.getImagenUrl() != null && !producto.getImagenUrl().isEmpty()) {
+            String oldFileName = producto.getImagenUrl().substring(producto.getImagenUrl().lastIndexOf('/') + 1);
+            try {
+                fileStorageService.deleteFile(oldFileName);
+            } catch (Exception e) {
+                // Log y continuar con borrado de la entidad
+                System.err.println("Aviso: no se pudo eliminar fichero de imagen: " + e.getMessage());
+            }
+        }
+
+        productoRepository.delete(producto);
     }
 
     public Producto actualizarStock(Long id, Integer cantidad) {

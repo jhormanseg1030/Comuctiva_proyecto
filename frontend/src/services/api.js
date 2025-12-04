@@ -88,7 +88,7 @@ export const createProducto = (productoData) => api.post('/productos/con-imagen'
 export const updateProducto = (id, productoData) => api.put(`/productos/${id}/con-imagen`, productoData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
-export const deleteProducto = (id) => api.delete(`/productos/${id}`);
+export const deleteProducto = (id, force = false) => api.delete(`/productos/${id}${force ? '?force=true' : ''}`);
 export const cambiarEstadoProducto = (id, activo) => api.put(`/productos/${id}/estado?activo=${activo}`, {}, {
   headers: { 'Accept': 'application/json' }
 });
