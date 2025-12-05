@@ -192,8 +192,8 @@ public class PedidoService {
         return new PedidoDTO(saved);
     }
 
-    // Cancelar pedido
-    public Pedido cancelarPedido(Long pedidoId, String numeroDocumento) {
+    // Cancelar pedido (devuelve DTO construido dentro de la transacción)
+    public PedidoDTO cancelarPedido(Long pedidoId, String numeroDocumento) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
@@ -217,6 +217,26 @@ public class PedidoService {
         }
 
         pedido.setEstado(Pedido.EstadoPedido.CANCELADO);
-        return pedidoRepository.save(pedido);
+        Pedido saved = pedidoRepository.save(pedido);
+
+        // Construir y devolver DTO mientras la sesión/transaction está activa
+        return new PedidoDTO(saved);
+    }
+
+    // Eliminar pedido (solo si está CANCELADO o por admin)
+    public void eliminarPedido(Long pedidoId, String numeroDocumento, boolean isAdmin) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+        if (!isAdmin) {
+            if (!pedido.getComprador().getNumeroDocumento().equals(numeroDocumento)) {
+                throw new RuntimeException("No tienes permiso para eliminar este pedido");
+            }
+            if (pedido.getEstado() != Pedido.EstadoPedido.CANCELADO) {
+                throw new RuntimeException("Solo se pueden eliminar pedidos cancelados");
+            }
+        }
+
+        pedidoRepository.delete(pedido);
     }
 }
