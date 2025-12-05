@@ -328,8 +328,12 @@ public class ProductoController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> eliminarProducto(@PathVariable Long id) {
-        productoService.eliminarProducto(id);
-        return ResponseEntity.ok(new MessageResponse("Producto eliminado exitosamente"));
+    public ResponseEntity<?> eliminarProducto(@PathVariable Long id, @RequestParam(required = false, defaultValue = "false") Boolean force) {
+        try {
+            productoService.eliminarProducto(id, Boolean.TRUE.equals(force));
+            return ResponseEntity.ok(new MessageResponse("Producto eliminado exitosamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
+        }
     }
 }

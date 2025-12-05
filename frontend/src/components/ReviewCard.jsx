@@ -1,7 +1,40 @@
-import React from 'react';
-import { Card, ListGroup } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Card, ListGroup, Button, Form } from 'react-bootstrap';
 
-const ReviewCard = ({ comentario }) => {
+const ReviewCard = ({ comentario, currentUser, onUpdate, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContenido, setEditContenido] = useState(comentario.contenido || comentario.comentario || '');
+  const [editCalificacion, setEditCalificacion] = useState(comentario.calificacion);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Check if current user owns this comment
+  const isOwner = currentUser && comentario.usuarioDocumento === currentUser;
+
+  const handleSaveEdit = async () => {
+    if (!editContenido.trim()) {
+      alert('El comentario no puede estar vacío');
+      return;
+    }
+    setIsUpdating(true);
+    const success = await onUpdate(comentario.id, editContenido, editCalificacion);
+    setIsUpdating(false);
+    if (success) {
+      setIsEditing(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditContenido(comentario.contenido || comentario.comentario || '');
+    setEditCalificacion(comentario.calificacion);
+    setIsEditing(false);
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm('¿Estás seguro de eliminar este comentario?')) {
+      await onDelete(comentario.id);
+    }
+  };
+
   const renderStars = (calificacion) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -63,7 +96,29 @@ const ReviewCard = ({ comentario }) => {
   const content = comentario.contenido || comentario.comentario || '';
 
   return (
-    <div style={{ padding: '20px 0' }}>
+    <div style={{ padding: '20px 0', position: 'relative' }}>
+      {/* Edit/Delete buttons for owner */}
+      {isOwner && !isEditing && (
+        <div style={{ position: 'absolute', top: '20px', right: '0', display: 'flex', gap: '8px' }}>
+          <Button 
+            variant="outline-primary" 
+            size="sm"
+            onClick={() => setIsEditing(true)}
+            style={{ fontSize: '0.85rem', padding: '4px 12px' }}
+          >
+            ✏️ Editar
+          </Button>
+          <Button 
+            variant="outline-danger" 
+            size="sm"
+            onClick={handleDelete}
+            style={{ fontSize: '0.85rem', padding: '4px 12px' }}
+          >
+            🗑️ Eliminar
+          </Button>
+        </div>
+      )}
+
       <div className="d-flex justify-content-between align-items-start mb-2">
         <div style={{ flex: 1 }}>
           <div className="d-flex align-items-center mb-2">
@@ -120,14 +175,63 @@ const ReviewCard = ({ comentario }) => {
           {formatDate(dateValue)}
         </small>
       </div>
-      <p style={{ 
-        margin: 0, 
-        fontSize: '0.95rem', 
-        lineHeight: '1.5',
-        color: '#0f1111'
-      }}>
-        {content}
-      </p>
+
+      {isEditing ? (
+        <div style={{ marginTop: '10px' }}>
+          <Form.Group className="mb-3">
+            <Form.Label style={{ fontSize: '0.9rem', fontWeight: '600' }}>Calificación</Form.Label>
+            <Form.Select 
+              value={editCalificacion} 
+              onChange={(e) => setEditCalificacion(parseInt(e.target.value))}
+              style={{ fontSize: '0.9rem' }}
+            >
+              <option value={5}>⭐⭐⭐⭐⭐ Excelente</option>
+              <option value={4}>⭐⭐⭐⭐ Muy bueno</option>
+              <option value={3}>⭐⭐⭐ Bueno</option>
+              <option value={2}>⭐⭐ Regular</option>
+              <option value={1}>⭐ Malo</option>
+            </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label style={{ fontSize: '0.9rem', fontWeight: '600' }}>Comentario</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={editContenido}
+              onChange={(e) => setEditContenido(e.target.value)}
+              style={{ fontSize: '0.9rem' }}
+            />
+          </Form.Group>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Button 
+              variant="success" 
+              size="sm" 
+              onClick={handleSaveEdit}
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Guardando...' : 'Guardar'}
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={handleCancelEdit}
+              disabled={isUpdating}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <p style={{ 
+          margin: 0, 
+          fontSize: '0.95rem', 
+          lineHeight: '1.5',
+          color: '#0f1111',
+          paddingRight: isOwner ? '180px' : '0'
+        }}>
+          {content}
+        </p>
+      )}
     </div>
   );
 };

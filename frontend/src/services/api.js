@@ -43,11 +43,19 @@ export const register = (userData) => api.post('/auth/register', userData);
 // Categorías
 export const getCategorias = () => api.get('/categorias');
 export const getCategoria = (id) => api.get(`/categorias/${id}`);
+export const createCategoria = (data) => api.post('/categorias', data);
+export const updateCategoria = (id, data) => api.put(`/categorias/${id}`, data);
+export const changeEstadoCategoria = (id, activo) => api.put(`/categorias/${id}/estado?activo=${activo}`);
+export const deleteCategoria = (id) => api.delete(`/categorias/${id}`);
 
 // Subcategorías
 export const getSubcategorias = () => api.get('/subcategorias');
 export const getSubcategoria = (id) => api.get(`/subcategorias/${id}`);
 export const getSubcategoriasByCategoria = (categoriaId) => api.get(`/subcategorias/categoria/${categoriaId}`);
+export const createSubcategoria = (data) => api.post('/subcategorias', data);
+export const updateSubcategoria = (id, data) => api.put(`/subcategorias/${id}`, data);
+export const changeEstadoSubcategoria = (id, activo) => api.put(`/subcategorias/${id}/estado?activo=${activo}`);
+export const deleteSubcategoria = (id) => api.delete(`/subcategorias/${id}`);
 
 // Productos
 export const getProductos = () => api.get('/productos');
@@ -68,6 +76,7 @@ export const getPedidos = () => api.get('/pedidos/mis-pedidos');
 export const getPedido = (id) => api.get(`/pedidos/${id}`);
 export const createPedido = (pedidoData) => api.post(`/pedidos/crear?direccionEnvio=${encodeURIComponent(pedidoData.direccionEntrega)}&metodoPago=${pedidoData.metodoPago}&costoFlete=${pedidoData.costoFlete || 0}`);
 export const cancelPedido = (id) => api.put(`/pedidos/${id}/cancelar`);
+export const deletePedido = (id) => api.delete(`/pedidos/${id}`);
 
 // Ventas
 export const getVentas = () => api.get('/pedidos/mis-ventas');
@@ -80,7 +89,7 @@ export const createProducto = (productoData) => api.post('/productos/con-imagen'
 export const updateProducto = (id, productoData) => api.put(`/productos/${id}/con-imagen`, productoData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
-export const deleteProducto = (id) => api.delete(`/productos/${id}`);
+export const deleteProducto = (id, force = false) => api.delete(`/productos/${id}${force ? '?force=true' : ''}`);
 export const cambiarEstadoProducto = (id, activo) => api.put(`/productos/${id}/estado?activo=${activo}`, {}, {
   headers: { 'Accept': 'application/json' }
 });
@@ -103,6 +112,9 @@ export const getComentariosByProducto = (productoId) => api.get(`/comentarios/pr
 export const createComentario = (comentarioData) => api.post('/comentarios', comentarioData);
 export const updateComentario = (id, comentarioData) => api.put(`/comentarios/${id}`, comentarioData);
 export const deleteComentario = (id) => api.delete(`/comentarios/${id}`);
+// Admin - moderación
+export const getComentariosAdmin = (params) => api.get('/comentarios/admin', { params });
+export const deleteComentarioAdmin = (id) => api.delete(`/comentarios/admin/${id}`);
 
 // Usuario
 export const getUsuario = (numeroDocumento) => api.get(`/usuarios/${numeroDocumento}`);

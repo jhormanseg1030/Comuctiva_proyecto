@@ -3,6 +3,7 @@ import { View, Text, Image, ActivityIndicator, ScrollView, StyleSheet, Touchable
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { productService, cartService } from '../services/api';
 import { getFullUrl } from '../services/api';
+import { authService } from '../services/api';
 
 const ProductDetailScreen = ({ route, navigation }: any) => {
   const { id } = route.params as { id: number };
@@ -25,6 +26,19 @@ const ProductDetailScreen = ({ route, navigation }: any) => {
       .catch((err) => {
         setError('No se pudo cargar el producto');
         setLoading(false);
+      });
+
+    // Obtener comentarios del producto
+    productService.getComentarios(id)
+      .then((res) => {
+        console.log('Comentarios recibidos:', res.data); // DEBUG
+        setComentarios(res.data.comentarios || []);
+        setComentariosLoading(false);
+      })
+      .catch((err) => {
+        console.log('Error al obtener comentarios:', err?.response?.data || err.message || err);
+        setComentariosError('No se pudieron cargar los comentarios');
+        setComentariosLoading(false);
       });
   }, [id]);
 

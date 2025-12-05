@@ -2,8 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-// const API_URL = 'http://172.16.111.133:8080/api'; // Para dispositivo físico
-const API_URL = 'http://10.0.2.2:8080/api'; // Para emulador Android
+const API_URL = 'http://172.16.102.152:8080/api'; // <-- Reemplaza por tu IP local
+// Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
   baseURL: API_URL,
@@ -19,29 +19,27 @@ api.interceptors.request.use(
     const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Token agregado al request:', config.url);
-    } else {
-      console.log('⚠️ No hay token disponible para:', config.url);
+      // console.log('🔑 Token agregado al request:', config.url);
     }
     return config;
   },
   (error) => {
-    console.error('❌ Error en interceptor de request:', error);
+    // console.error('❌ Error en interceptor de request:', error);
     return Promise.reject(error);
   }
 );
 
 // Interceptor para manejar respuestas y errores
-api.interceptors.response.use(
-  (response) => {
-    console.log('✅ Respuesta exitosa:', response.config.url, response.status);
-    return response;
-  },
-  (error) => {
-    console.error('❌ Error en respuesta:', error.config?.url, error.response?.status, error.response?.data);
-    return Promise.reject(error);
-  }
-);
+// api.interceptors.response.use(
+//   (response) => {
+//     console.log('✅ Respuesta exitosa:', response.config.url, response.status);
+//     return response;
+//   },
+//   (error) => {
+//     console.error('❌ Error en respuesta:', error.config?.url, error.response?.status, error.response?.data);
+//     return Promise.reject(error);
+//   }
+// );
 
 export const authService = {
   login: async (numeroDocumento: string, password: string) => {
@@ -141,7 +139,11 @@ export const productService = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   update: (id: number, data: any) => api.put(`/productos/${id}`, data),
-  delete: (id: number) => api.delete(`/productos/${id}`),
+  delete: (id: number) => api.delete(`/products/${id}`),
+  // Obtener comentarios de un producto (ajustado a la ruta correcta)
+  getComentarios: (id: number) => api.get(`/comentarios/producto/${id}`),
+  // Crear comentario/reseña de un producto
+  crearComentario: (id: number, data: any) => api.post(`/productos/${id}/comentarios`, data),
 };
 
 export const statsService = {

@@ -1,3 +1,4 @@
+// Backup of SubcategoriaDTO before adding 'activo' field
 package com.ecomerce.dto;
 
 import com.ecomerce.model.Subcategoria;
@@ -12,7 +13,6 @@ public class SubcategoriaDTO {
     private Long id;
     private String nombre;
     private String descripcion;
-    private Boolean activo;
     private Long categoriaId;
     private String categoriaNombre;
 
@@ -20,7 +20,6 @@ public class SubcategoriaDTO {
         this.id = subcategoria.getId();
         this.nombre = subcategoria.getNombre();
         this.descripcion = subcategoria.getDescripcion();
-        this.activo = subcategoria.getActivo();
         if (subcategoria.getCategoria() != null) {
             this.categoriaId = subcategoria.getCategoria().getId();
             this.categoriaNombre = subcategoria.getCategoria().getNombre();
