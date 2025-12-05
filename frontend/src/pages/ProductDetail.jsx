@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Row, Col, Button, Card, ListGroup, Form, Badge, Spinner, Alert } from 'react-bootstrap';
-import { getProducto, getComentariosByProducto, createComentario } from '../services/api';
+import api, { getProducto, getComentariosByProducto, createComentario, deleteComentario } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import ReviewCard from '../components/ReviewCard';
@@ -21,7 +21,7 @@ const ProductDetail = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const { addItem } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     loadProductoData();
@@ -111,6 +111,41 @@ const ProductDetail = () => {
       alert(err.response?.data?.message || 'Error al agregar comentario');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUpdateComentario = async (comentarioId, nuevoContenido, nuevaCalificacion) => {
+    try {
+      const params = new URLSearchParams();
+      if (nuevoContenido) params.append('comentario', nuevoContenido);
+      if (nuevaCalificacion) params.append('calificacion', nuevaCalificacion);
+      
+      await api.put(`/comentarios/${comentarioId}?${params.toString()}`);
+      
+      // Recargar comentarios
+      const responseComentarios = await getComentariosByProducto(id);
+      const dataComentarios = responseComentarios.data;
+      const comentariosArray = Array.isArray(dataComentarios) ? dataComentarios : (dataComentarios.comentarios || []);
+      setComentarios(comentariosArray);
+      
+      return true;
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error al actualizar comentario');
+      return false;
+    }
+  };
+
+  const handleDeleteComentario = async (comentarioId) => {
+    try {
+      await deleteComentario(comentarioId);
+      
+      // Eliminar de la lista local
+      setComentarios((prev) => prev.filter((c) => c.id !== comentarioId));
+      
+      return true;
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error al eliminar comentario');
+      return false;
     }
   };
 
@@ -513,7 +548,12 @@ const ProductDetail = () => {
                   <div>
                     {comentarios.map((comentario, index) => (
                       <div key={comentario.id}>
-                        <ReviewCard comentario={comentario} />
+                          <ReviewCard 
+                            comentario={comentario} 
+                            currentUser={user?.numeroDocumento}
+                            onUpdate={handleUpdateComentario}
+                            onDelete={handleDeleteComentario}
+                          />
                         {index < comentarios.length - 1 && <hr style={{ margin: '20px 0' }} />}
                       </div>
                     ))}

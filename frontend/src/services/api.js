@@ -76,6 +76,7 @@ export const getPedidos = () => api.get('/pedidos/mis-pedidos');
 export const getPedido = (id) => api.get(`/pedidos/${id}`);
 export const createPedido = (pedidoData) => api.post(`/pedidos/crear?direccionEnvio=${encodeURIComponent(pedidoData.direccionEntrega)}&metodoPago=${pedidoData.metodoPago}&costoFlete=${pedidoData.costoFlete || 0}`);
 export const cancelPedido = (id) => api.put(`/pedidos/${id}/cancelar`);
+export const deletePedido = (id) => api.delete(`/pedidos/${id}`);
 
 // Ventas
 export const getVentas = () => api.get('/pedidos/mis-ventas');

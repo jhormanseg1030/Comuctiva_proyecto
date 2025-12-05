@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Table, Badge, Button, Spinner, Alert, Row, Col, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { getPedidos, cancelPedido, deletePedido } from '../services/api';
+import { getPedidos } from '../services/api';
 
 const MyOrders = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -9,10 +9,6 @@ const MyOrders = () => {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedPedido, setSelectedPedido] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [actionError, setActionError] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
     loadPedidos();
@@ -31,50 +27,6 @@ const MyOrders = () => {
       console.error(err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCancelarPedido = async () => {
-    if (!selectedPedido) return;
-    const ok = window.confirm('¿Estás seguro que quieres cancelar este pedido?');
-    if (!ok) return;
-
-    try {
-      setActionLoading(true);
-      setActionError(null);
-      await cancelPedido(selectedPedido.id);
-      setShowModal(false);
-      setSelectedPedido(null);
-      // Recargar lista
-      await loadPedidos();
-    } catch (err) {
-      const serverMessage = err?.response?.data?.message;
-      setActionError(serverMessage ? serverMessage : 'Error al cancelar el pedido');
-      console.error(err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleEliminarPedido = async () => {
-    if (!selectedPedido) return;
-    const ok = window.confirm('¿Eliminar este pedido permanentemente? Esta acción no se puede deshacer.');
-    if (!ok) return;
-
-    try {
-      setDeleteLoading(true);
-      setDeleteError(null);
-      await deletePedido(selectedPedido.id);
-      setShowModal(false);
-      // Eliminar de la lista local sin refrescar
-      setPedidos((prev) => prev.filter((p) => p.id !== selectedPedido.id));
-      setSelectedPedido(null);
-    } catch (err) {
-      const serverMessage = err?.response?.data?.message;
-      setDeleteError(serverMessage ? serverMessage : 'Error al eliminar el pedido');
-      console.error(err);
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -214,36 +166,17 @@ const MyOrders = () => {
               </h5>
             </div>
 
-            <div className="mt-3 d-flex gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => { setSelectedPedido(pedido); setShowModal(true); }}
-              >
-                Ver Detalles
-              </Button>
-              
-              {pedido.estadoPedido === 'CANCELADO' && (
+            {pedido.estadoPedido === 'PENDIENTE' && (
+              <div className="mt-3">
                 <Button
-                  variant="outline-danger"
+                  variant="primary"
                   size="sm"
-                  onClick={async () => {
-                    const ok = window.confirm('¿Eliminar este pedido permanentemente? Esta acción no se puede deshacer.');
-                    if (!ok) return;
-                    try {
-                      await deletePedido(pedido.id);
-                      setPedidos((prev) => prev.filter((p) => p.id !== pedido.id));
-                    } catch (err) {
-                      const serverMessage = err?.response?.data?.message;
-                      alert(serverMessage ? serverMessage : 'Error al eliminar el pedido');
-                      console.error(err);
-                    }
-                  }}
+                  onClick={() => { setSelectedPedido(pedido); setShowModal(true); }}
                 >
-                  Eliminar
+                  Ver Detalles
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
           </Card.Body>
         </Card>
       ))}
@@ -311,21 +244,6 @@ const MyOrders = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          {actionError && <Alert variant="danger" className="me-auto">{actionError}</Alert>}
-          {deleteError && <Alert variant="danger" className="me-auto">{deleteError}</Alert>}
-
-          {selectedPedido && (selectedPedido.estadoPedido === 'PENDIENTE' || selectedPedido.estadoPedido === 'CONFIRMADO') && (
-            <Button variant="danger" onClick={handleCancelarPedido} disabled={actionLoading}>
-              {actionLoading ? 'Cancelando...' : 'Cancelar Pedido'}
-            </Button>
-          )}
-
-          {selectedPedido && selectedPedido.estadoPedido === 'CANCELADO' && (
-            <Button variant="outline-danger" onClick={handleEliminarPedido} disabled={deleteLoading}>
-              {deleteLoading ? 'Eliminando...' : 'Eliminar Pedido'}
-            </Button>
-          )}
-
           <Button variant="secondary" onClick={() => setShowModal(false)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
