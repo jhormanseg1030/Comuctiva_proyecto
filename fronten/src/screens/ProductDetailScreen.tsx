@@ -1,24 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import { useRoute, useFocusEffect } from '@react-navigation/native';
-import { productService } from '../services/api';
+import { View, Text, Image, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { productService, cartService } from '../services/api';
 import { getFullUrl } from '../services/api';
 import { authService } from '../services/api';
 
-const ProductDetailScreen = () => {
-  const route = useRoute();
+const ProductDetailScreen = ({ route, navigation }: any) => {
   const { id } = route.params as { id: number };
+  const isLoggedIn = route?.params?.isLoggedIn || false;
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [comentarios, setComentarios] = useState<any[]>([]);
-  const [comentariosLoading, setComentariosLoading] = useState(true);
-  const [comentariosError, setComentariosError] = useState<string | null>(null);
-  const [nuevaCalificacion, setNuevaCalificacion] = useState(5);
-  const [nuevoComentario, setNuevoComentario] = useState('');
-  const [enviandoComentario, setEnviandoComentario] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [cantidad, setCantidad] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     productService.getById(id)
@@ -45,40 +42,42 @@ const ProductDetailScreen = () => {
       });
   }, [id]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      authService.getCurrentUser().then(setUser);
-    }, [])
-  );
+  const handleAddToCart = async () => {
+    console.log('🛒 Intentando agregar al carrito:', product?.nombre, 'Cantidad:', cantidad, 'Logueado:', isLoggedIn);
 
-  const handleEnviarComentario = async () => {
-    if (!nuevoComentario.trim()) {
-      setFormError('El comentario no puede estar vacío');
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
       return;
     }
-    setEnviandoComentario(true);
-    setFormError(null);
+
+    setAddingToCart(true);
     try {
-      // Ajusta el endpoint si es diferente en tu backend
-      await productService.crearComentario(id, {
-        calificacion: nuevaCalificacion,
-        comentario: nuevoComentario,
-      });
-      // Recargar comentarios
-      const res = await productService.getComentarios(id);
-      setComentarios(res.data);
-      setNuevoComentario('');
-      setNuevaCalificacion(5);
-    } catch (err) {
-      setFormError('No se pudo publicar la reseña');
+      const response = await cartService.addToCart(product.id, cantidad);
+      console.log('✅ Producto agregado:', response?.data);
+      setSuccessMessage(`${product.nombre} agregado al carrito`);
+      setShowSuccessModal(true);
+      setCantidad(1); // Reset cantidad
+      // Auto cerrar después de 3 segundos
+      setTimeout(() => setShowSuccessModal(false), 3000);
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      const errorMessage = error?.response?.data?.message || 'Error al agregar al carrito';
+      Alert.alert('❌ Error', errorMessage);
+    } finally {
+      setAddingToCart(false);
     }
-    setEnviandoComentario(false);
   };
 
-  const handleCancelarComentario = () => {
-    setNuevoComentario('');
-    setNuevaCalificacion(5);
-    setFormError(null);
+  const incrementarCantidad = () => {
+    if (cantidad < (product?.stock || 0)) {
+      setCantidad(cantidad + 1);
+    }
+  };
+
+  const decrementarCantidad = () => {
+    if (cantidad > 1) {
+      setCantidad(cantidad - 1);
+    }
   };
 
   if (loading) {
@@ -124,79 +123,74 @@ const ProductDetailScreen = () => {
         <View style={styles.cartRow}>
           <Text style={styles.cantidadLabel}>Cantidad:</Text>
           <View style={styles.cantidadBox}>
-            <Text style={styles.cantidadBtn}>-</Text>
-            <Text style={styles.cantidadValue}>1</Text>
-            <Text style={styles.cantidadBtn}>+</Text>
+            <TouchableOpacity onPress={decrementarCantidad}>
+              <Text style={styles.cantidadBtn}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.cantidadValue}>{cantidad}</Text>
+            <TouchableOpacity onPress={incrementarCantidad}>
+              <Text style={styles.cantidadBtn}>+</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.cartButton}>
-          <Text style={styles.cartButtonText}>🛒 Agregar al carrito</Text>
+        <TouchableOpacity 
+          style={[styles.cartButton, (addingToCart || product?.stock === 0) && styles.cartButtonDisabled]}
+          onPress={handleAddToCart}
+          disabled={addingToCart || product?.stock === 0}
+        >
+          <Text style={styles.cartButtonText}>
+            {addingToCart ? '⏳ Agregando...' : '🛒 Agregar al carrito'}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Comentarios de clientes */}
-      <View style={{ marginTop: 24 }}>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Reseñas de Clientes</Text>
-        {/* Formulario de nueva reseña solo si está logueado */}
-        {user && typeof user.numeroDocumento === 'string' && user.numeroDocumento.trim().length > 0 ? (
-          <View style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 14, marginBottom: 18 }}>
-            <Text style={{ fontWeight: 'bold', marginBottom: 6 }}>Calificación</Text>
-            <View style={{ flexDirection: 'row', marginBottom: 10 }}>
-              {[1,2,3,4,5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setNuevaCalificacion(star)}>
-                  <Text style={{ fontSize: 28, color: star <= nuevaCalificacion ? '#fbbf24' : '#ddd' }}>★</Text>
-                </TouchableOpacity>
-              ))}
+      {/* Modal de éxito personalizado */}
+      <Modal visible={showSuccessModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.successIcon}>
+              <Text style={styles.iconText}>✓</Text>
             </View>
-            <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Comentario</Text>
-            <TextInput
-              style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, minHeight: 60, marginBottom: 10, borderWidth: 1, borderColor: '#eee' }}
-              placeholder="Cuéntanos tu experiencia con este producto..."
-              value={nuevoComentario}
-              onChangeText={setNuevoComentario}
-              multiline
-            />
-            {formError && <Text style={{ color: 'red', marginBottom: 8 }}>{formError}</Text>}
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-start' }}>
-              <TouchableOpacity
-                style={{ backgroundColor: '#22c55e', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginRight: 10 }}
-                onPress={handleEnviarComentario}
-                disabled={enviandoComentario}
+            <Text style={styles.modalTitle}>¡Producto Agregado!</Text>
+            <Text style={styles.modalMessage}>{successMessage}</Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de login personalizado */}
+      <Modal visible={showLoginModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.loginIcon}>
+              <Text style={styles.loginIconText}>🔐</Text>
+            </View>
+            <Text style={styles.modalTitle}>Debes iniciar sesión</Text>
+            <Text style={styles.modalMessage}>Inicia sesión para agregar productos al carrito</Text>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowLoginModal(false)}
               >
-                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Publicar Reseña</Text>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={{ backgroundColor: '#e5e7eb', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18 }}
-                onPress={handleCancelarComentario}
-                disabled={enviandoComentario}
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={() => {
+                  setShowLoginModal(false);
+                  navigation.navigate('Login' as never);
+                }}
               >
-                <Text style={{ color: '#15803d', fontWeight: 'bold', fontSize: 16 }}>Cancelar</Text>
+                <Text style={styles.modalButtonText}>Iniciar sesión</Text>
               </TouchableOpacity>
             </View>
           </View>
-        ) : null}
-        {/* Lista de comentarios */}
-        {comentariosLoading ? (
-          <ActivityIndicator size="small" />
-        ) : comentariosError ? (
-          <Text style={{ color: 'red' }}>{comentariosError}</Text>
-        ) : comentarios.length === 0 ? (
-          <Text style={{ color: '#555' }}>No hay comentarios para este producto.</Text>
-        ) : (
-          comentarios.map((comentario, idx) => (
-            <View key={idx} style={{ backgroundColor: '#f1f5f9', borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
-                {comentario.usuarioNombre || 'Usuario'}
-              </Text>
-              <Text style={{ color: '#22c55e', fontWeight: 'bold', marginBottom: 2 }}>
-                {'★'.repeat(comentario.calificacion || 5)}
-              </Text>
-              <Text style={{ color: '#333', marginBottom: 4 }}>{comentario.comentario}</Text>
-              <Text style={{ fontSize: 12, color: '#888' }}>{comentario.fecha ? new Date(comentario.fecha).toLocaleDateString() : ''}</Text>
-            </View>
-          ))
-        )}
-      </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -319,6 +313,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
+  cartButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
+  },
   cartButtonText: {
     color: '#fff',
     fontSize: 18,
@@ -328,6 +326,106 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    padding: 36,
+    alignItems: 'center',
+    width: '82%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 14,
+  },
+  successIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  iconText: {
+    color: '#fff',
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 23,
+    fontWeight: '400',
+  },
+  modalButton: {
+    backgroundColor: '#22c55e',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  loginIcon: {
+    width: 85,
+    height: 85,
+    borderRadius: 42,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  loginIconText: {
+    color: '#fff',
+    fontSize: 48,
+    fontWeight: '700',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+  },
+  cancelButtonText: {
+    color: '#6b7280',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 export default ProductDetailScreen;

@@ -142,8 +142,8 @@ const cartStyles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+    padding: 12,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -159,14 +159,15 @@ const cartStyles = StyleSheet.create({
   },
   productInfo: {
     flex: 1,
-    marginLeft: 15,
-    marginRight: 8,
+    marginLeft: 12,
+    marginRight: 4,
   },
   productName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#000',
-    marginBottom: 4,
+    marginBottom: 2,
+    numberOfLines: 1,
   },
   productPrice: {
     fontSize: 18,
@@ -592,7 +593,7 @@ const CartScreen = ({ navigation, route }: any) => {
         />
         
         <View style={cartStyles.productInfo}>
-          <Text style={cartStyles.productName}>{name}</Text>
+          <Text style={cartStyles.productName} numberOfLines={1}>{name}</Text>
           <Text style={cartStyles.productPrice}>${price?.toLocaleString()}</Text>
           {description && (
             <Text style={cartStyles.productDescription} numberOfLines={2}>
