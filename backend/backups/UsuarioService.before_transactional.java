@@ -1,3 +1,4 @@
+// Backup before adding @Transactional - Dec 6, 2025
 package com.ecomerce.service;
 
 import com.ecomerce.model.Usuario;
@@ -5,12 +6,7 @@ import com.ecomerce.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,16 +15,11 @@ import java.util.stream.Collectors;
 @Service
 public class UsuarioService {
 
-    private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
-
     @Autowired
     private UsuarioRepository usuarioRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     public Usuario crearUsuario(Usuario usuario) {
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
@@ -36,15 +27,18 @@ public class UsuarioService {
     }
 
     public Optional<Usuario> obtenerUsuarioPorDocumento(String numeroDocumento) {
-        return usuarioRepository.findById(numeroDocumento);
+        return usuarioRepository.findById(numeroDocumento)
+                .filter(u -> !Boolean.TRUE.equals(u.getDeleted()));
     }
 
     public Optional<Usuario> obtenerUsuarioPorCorreo(String correo) {
-        return usuarioRepository.findByCorreo(correo);
+        return usuarioRepository.findByCorreo(correo)
+                .filter(u -> !Boolean.TRUE.equals(u.getDeleted()));
     }
 
     public List<Usuario> obtenerTodosUsuarios() {
         return usuarioRepository.findAll().stream()
+                .filter(u -> !Boolean.TRUE.equals(u.getDeleted()))
                 .collect(Collectors.toList());
     }
 
@@ -102,33 +96,33 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    @Transactional
     public void eliminarUsuario(String numeroDocumento, String adminDocumento) {
-        logger.info("Iniciando eliminación de usuario: {}, solicitado por: {}", numeroDocumento, adminDocumento);
-        
         Usuario usuario = usuarioRepository.findById(numeroDocumento)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        if (Boolean.TRUE.equals(usuario.getDeleted())) {
+            throw new RuntimeException("Usuario no encontrado");
+        }
+
         // Prevent self-delete
         if (usuario.getNumeroDocumento().equals(adminDocumento)) {
-            logger.warn("Intento de auto-eliminación por: {}", adminDocumento);
             throw new RuntimeException("No puedes eliminarte a ti mismo");
         }
 
-        // If target is ADMIN, ensure there is at least one other ADMIN
+        // If target is ADMIN, ensure there is at least one other non-deleted ADMIN
         if (usuario.getRol() == Usuario.Rol.ADMIN) {
-            long adminCount = usuarioRepository.findByRol(Usuario.Rol.ADMIN).size();
+            long adminCount = usuarioRepository.findByRol(Usuario.Rol.ADMIN).stream()
+                    .filter(u -> !Boolean.TRUE.equals(u.getDeleted()))
+                    .count();
             if (adminCount <= 1) {
-                logger.warn("Intento de eliminar el último administrador: {}", numeroDocumento);
                 throw new RuntimeException("No se puede eliminar el último administrador");
             }
         }
 
-        logger.info("Eliminando físicamente usuario de la BD: {}", numeroDocumento);
-        usuarioRepository.delete(usuario);
-        entityManager.flush();
-        
-        logger.info("Usuario eliminado exitosamente de la BD: {}", numeroDocumento);
+        usuario.setDeleted(true);
+        usuario.setDeletedAt(LocalDateTime.now());
+        usuario.setDeletedBy(adminDocumento);
+        usuarioRepository.save(usuario);
     }
 
     public Boolean existeCorreo(String correo) {
