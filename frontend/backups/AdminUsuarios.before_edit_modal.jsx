@@ -1,11 +1,11 @@
+// Backup before adding edit modal - Dec 6, 2025
 import React, { useEffect, useState } from 'react';
 import { 
   getAllUsuarios, 
   cambiarRolUsuario, 
   cambiarEstadoUsuario, 
   deleteUsuario,
-  register as registerApi,
-  updateUsuario
+  register as registerApi
 } from '../services/api';
 
 const AdminUsuarios = () => {
@@ -15,16 +15,6 @@ const AdminUsuarios = () => {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [filtroDocumento, setFiltroDocumento] = useState('');
-  const [showEdit, setShowEdit] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editError, setEditError] = useState(null);
-  const [editData, setEditData] = useState({
-    numeroDocumento: '',
-    correo: '',
-    telefono: '',
-    password: '',
-    confirmPassword: ''
-  });
   const [formData, setFormData] = useState({
     numeroDocumento: '',
     tipoDocumento: 'CEDULA',
@@ -134,86 +124,6 @@ const AdminUsuarios = () => {
     }
   };
 
-  const openEditModal = (usuario) => {
-    setEditData({
-      numeroDocumento: usuario.numeroDocumento,
-      correo: usuario.correo || '',
-      telefono: usuario.telefono || '',
-      password: '',
-      confirmPassword: ''
-    });
-    setEditError(null);
-    setShowEdit(true);
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const validateEditPayload = () => {
-    if (!editData.correo || !editData.correo.trim()) {
-      return 'El correo es obligatorio';
-    }
-    if (!editData.telefono || !editData.telefono.trim()) {
-      return 'El teléfono es obligatorio';
-    }
-    if (editData.password && editData.password.length < 6) {
-      return 'La contraseña debe tener al menos 6 caracteres';
-    }
-    if (editData.password !== editData.confirmPassword) {
-      return 'Las contraseñas no coinciden';
-    }
-    return null;
-  };
-
-  const handleEdit = async (e) => {
-    e.preventDefault();
-    setEditError(null);
-    const validationError = validateEditPayload();
-    if (validationError) {
-      setEditError(validationError);
-      return;
-    }
-
-    setEditing(true);
-    try {
-      // Get the full user object from the current list
-      const currentUser = usuarios.find(u => u.numeroDocumento === editData.numeroDocumento);
-      if (!currentUser) {
-        setEditError('Usuario no encontrado');
-        setEditing(false);
-        return;
-      }
-
-      // Build complete payload with all required fields
-      const payload = {
-        numeroDocumento: currentUser.numeroDocumento,
-        tipoDocumento: currentUser.tipoDocumento,
-        nombre: currentUser.nombre,
-        apellido: currentUser.apellido,
-        direccion: currentUser.direccion,
-        correo: editData.correo,
-        telefono: editData.telefono,
-        rol: currentUser.rol,
-        activo: currentUser.activo,
-        // Send current password hash if not changing, or new password if provided
-        password: editData.password ? editData.password : currentUser.password
-      };
-      
-      await updateUsuario(editData.numeroDocumento, payload);
-      setShowEdit(false);
-      fetchUsuarios();
-      alert('Usuario actualizado exitosamente');
-    } catch (err) {
-      console.error('Error actualizando:', err);
-      const msg = err.response?.data?.message || err.response?.data || 'Error al actualizar usuario';
-      setEditError(typeof msg === 'string' ? msg : JSON.stringify(msg));
-    } finally {
-      setEditing(false);
-    }
-  };
-
   if (loading) return <div>Cargando usuarios...</div>;
 
   const usuariosFiltrados = usuarios.filter(u => {
@@ -269,21 +179,14 @@ const AdminUsuarios = () => {
                     <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => handleCambiarRol(u.numeroDocumento, 'USER')}>Quitar Admin</button>
                   )}
                   <button className="btn btn-sm btn-outline-warning me-2" onClick={() => handleCambiarEstado(u.numeroDocumento, !u.activo)}>{u.activo ? 'Desactivar' : 'Activar'}</button>
-                  <button className="btn btn-sm btn-outline-info me-2" onClick={() => openEditModal(u)}>Actualizar</button>
                   <button className="btn btn-sm btn-outline-danger" onClick={async () => {
                     if (!window.confirm(`Eliminar usuario ${u.numeroDocumento}? Esta acción no se puede deshacer.`)) return;
                     try {
-                      console.log('Eliminando usuario:', u.numeroDocumento);
-                      const response = await deleteUsuario(u.numeroDocumento);
-                      console.log('Respuesta eliminación:', response);
-                      alert('Usuario eliminado exitosamente');
-                      await fetchUsuarios();
+                      await deleteUsuario(u.numeroDocumento);
+                      fetchUsuarios();
                     } catch (err) {
-                      console.error('Error completo al eliminar:', err);
-                      console.error('Response data:', err.response?.data);
-                      console.error('Response status:', err.response?.status);
-                      const msg = err.response?.data?.message || err.response?.data || 'Error al eliminar usuario';
-                      alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
+                      console.error(err);
+                      alert('Error al eliminar usuario');
                     }
                   }}>Eliminar</button>
                 </td>
@@ -363,79 +266,6 @@ const AdminUsuarios = () => {
                   <button type="button" className="btn btn-outline-secondary" onClick={() => { setShowCreate(false); setCreateError(null); }} disabled={creating}>Cancelar</button>
                   <button type="submit" className="btn btn-primary" disabled={creating}>
                     {creating ? 'Creando...' : 'Crear usuario'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showEdit && (
-        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Actualizar Usuario: {editData.numeroDocumento}</h5>
-                <button type="button" className="btn-close" onClick={() => { setShowEdit(false); setEditError(null); }}></button>
-              </div>
-              <form onSubmit={handleEdit}>
-                <div className="modal-body">
-                  {editError && <div className="alert alert-danger">{editError}</div>}
-
-                  <div className="mb-3">
-                    <label className="form-label">Correo *</label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      name="correo"
-                      value={editData.correo}
-                      onChange={handleEditChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Teléfono *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="telefono"
-                      value={editData.telefono}
-                      onChange={handleEditChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Nueva Contraseña (opcional)</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      name="password"
-                      value={editData.password}
-                      onChange={handleEditChange}
-                      minLength={6}
-                      placeholder="Dejar en blanco para no cambiar"
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Confirmar Contraseña</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      name="confirmPassword"
-                      value={editData.confirmPassword}
-                      onChange={handleEditChange}
-                      placeholder="Solo si cambias la contraseña"
-                    />
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-outline-secondary" onClick={() => { setShowEdit(false); setEditError(null); }} disabled={editing}>Cancelar</button>
-                  <button type="submit" className="btn btn-primary" disabled={editing}>
-                    {editing ? 'Guardando...' : 'Guardar cambios'}
                   </button>
                 </div>
               </form>
