@@ -13,6 +13,7 @@ import CartScreen from './src/screens/CartScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
 import UsuarioMenuScreen from './src/screens/UsuarioScreen';
 import MisPedidosScreen from './src/screens/MisPedidosScreen';
+import DetallePedidoScreen from './src/screens/DetallePedidoScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -124,6 +125,13 @@ export default function App() {
         <Stack.Screen
           name="MisPedidos"
           component={MisPedidosScreen}
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="DetallePedido"
+          component={DetallePedidoScreen}
           options={{
             headerShown: false
           }}

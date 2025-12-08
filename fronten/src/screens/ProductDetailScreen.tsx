@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-import { productService } from '../services/api';
+import { View, Text, Image, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { productService, cartService } from '../services/api';
 import { getFullUrl } from '../services/api';
+import { authService } from '../services/api';
 
-const ProductDetailScreen = () => {
-  const route = useRoute();
+const ProductDetailScreen = ({ route, navigation }: any) => {
   const { id } = route.params as { id: number };
+  const isLoggedIn = route?.params?.isLoggedIn || false;
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cantidad, setCantidad] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     productService.getById(id)
@@ -21,7 +27,58 @@ const ProductDetailScreen = () => {
         setError('No se pudo cargar el producto');
         setLoading(false);
       });
+
+    // Obtener comentarios del producto
+    productService.getComentarios(id)
+      .then((res) => {
+        console.log('Comentarios recibidos:', res.data); // DEBUG
+        setComentarios(res.data.comentarios || []);
+        setComentariosLoading(false);
+      })
+      .catch((err) => {
+        console.log('Error al obtener comentarios:', err?.response?.data || err.message || err);
+        setComentariosError('No se pudieron cargar los comentarios');
+        setComentariosLoading(false);
+      });
   }, [id]);
+
+  const handleAddToCart = async () => {
+    console.log('🛒 Intentando agregar al carrito:', product?.nombre, 'Cantidad:', cantidad, 'Logueado:', isLoggedIn);
+
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    setAddingToCart(true);
+    try {
+      const response = await cartService.addToCart(product.id, cantidad);
+      console.log('✅ Producto agregado:', response?.data);
+      setSuccessMessage(`${product.nombre} agregado al carrito`);
+      setShowSuccessModal(true);
+      setCantidad(1); // Reset cantidad
+      // Auto cerrar después de 3 segundos
+      setTimeout(() => setShowSuccessModal(false), 3000);
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      const errorMessage = error?.response?.data?.message || 'Error al agregar al carrito';
+      Alert.alert('❌ Error', errorMessage);
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const incrementarCantidad = () => {
+    if (cantidad < (product?.stock || 0)) {
+      setCantidad(cantidad + 1);
+    }
+  };
+
+  const decrementarCantidad = () => {
+    if (cantidad > 1) {
+      setCantidad(cantidad - 1);
+    }
+  };
 
   if (loading) {
     return <ActivityIndicator size="large" style={{ flex: 1 }} />;
@@ -66,15 +123,74 @@ const ProductDetailScreen = () => {
         <View style={styles.cartRow}>
           <Text style={styles.cantidadLabel}>Cantidad:</Text>
           <View style={styles.cantidadBox}>
-            <Text style={styles.cantidadBtn}>-</Text>
-            <Text style={styles.cantidadValue}>1</Text>
-            <Text style={styles.cantidadBtn}>+</Text>
+            <TouchableOpacity onPress={decrementarCantidad}>
+              <Text style={styles.cantidadBtn}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.cantidadValue}>{cantidad}</Text>
+            <TouchableOpacity onPress={incrementarCantidad}>
+              <Text style={styles.cantidadBtn}>+</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.cartButton}>
-          <Text style={styles.cartButtonText}>🛒 Agregar al carrito</Text>
+        <TouchableOpacity 
+          style={[styles.cartButton, (addingToCart || product?.stock === 0) && styles.cartButtonDisabled]}
+          onPress={handleAddToCart}
+          disabled={addingToCart || product?.stock === 0}
+        >
+          <Text style={styles.cartButtonText}>
+            {addingToCart ? '⏳ Agregando...' : '🛒 Agregar al carrito'}
+          </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal de éxito personalizado */}
+      <Modal visible={showSuccessModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.successIcon}>
+              <Text style={styles.iconText}>✓</Text>
+            </View>
+            <Text style={styles.modalTitle}>¡Producto Agregado!</Text>
+            <Text style={styles.modalMessage}>{successMessage}</Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de login personalizado */}
+      <Modal visible={showLoginModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.loginIcon}>
+              <Text style={styles.loginIconText}>🔐</Text>
+            </View>
+            <Text style={styles.modalTitle}>Debes iniciar sesión</Text>
+            <Text style={styles.modalMessage}>Inicia sesión para agregar productos al carrito</Text>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowLoginModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={() => {
+                  setShowLoginModal(false);
+                  navigation.navigate('Login' as never);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Iniciar sesión</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -197,6 +313,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
+  cartButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
+  },
   cartButtonText: {
     color: '#fff',
     fontSize: 18,
@@ -206,6 +326,106 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    padding: 36,
+    alignItems: 'center',
+    width: '82%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 14,
+  },
+  successIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  iconText: {
+    color: '#fff',
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 23,
+    fontWeight: '400',
+  },
+  modalButton: {
+    backgroundColor: '#22c55e',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  loginIcon: {
+    width: 85,
+    height: 85,
+    borderRadius: 42,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  loginIconText: {
+    color: '#fff',
+    fontSize: 48,
+    fontWeight: '700',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+  },
+  cancelButtonText: {
+    color: '#6b7280',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 export default ProductDetailScreen;

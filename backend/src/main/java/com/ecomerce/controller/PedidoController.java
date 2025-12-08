@@ -154,8 +154,29 @@ public class PedidoController {
         try {
             String numeroDocumento = authentication.getName();
             PedidoDTO pedidoDTO = pedidoService.cancelarPedido(pedidoId, numeroDocumento);
-
             return ResponseEntity.ok(pedidoDTO);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+
+    // Eliminar pedido
+    @DeleteMapping("/{pedidoId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> eliminarPedido(
+            @PathVariable Long pedidoId,
+            Authentication authentication) {
+        try {
+            String numeroDocumento = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            pedidoService.eliminarPedido(pedidoId, numeroDocumento, isAdmin);
+            return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: " + e.getMessage()));
