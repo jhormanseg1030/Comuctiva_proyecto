@@ -30,7 +30,7 @@ public class CarritoController {
     public ResponseEntity<?> obtenerMiCarrito(Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            System.out.println("🛒 GET /carrito - Usuario: " + numeroDocumento);
+            System.out.println("🛒 GET /carrito - Usuario: '" + numeroDocumento + "' (len=" + (numeroDocumento!=null?numeroDocumento.length():0) + ")");
             
             List<Carrito> carrito = carritoService.obtenerCarritoPorUsuario(numeroDocumento);
             
@@ -45,6 +45,15 @@ public class CarritoController {
             response.put("total", total);
             response.put("cantidadItems", carritoDTO.size());
             response.put("usuario", numeroDocumento); // Agregar para debugging
+
+            // Debug: imprimir ids de items recuperados
+            System.out.println("🔎 Carrito raw items count: " + carrito.size());
+            for (Carrito item : carrito) {
+                Long itemId = item.getId();
+                Long prodId = item.getProducto() != null ? item.getProducto().getId() : null;
+                String userDoc = item.getUsuario() != null ? item.getUsuario().getNumeroDocumento() : null;
+                System.out.println(" - itemId=" + itemId + ", productoId=" + prodId + ", usuarioDocumento='" + userDoc + "'");
+            }
 
             System.out.println("✅ Carrito cargado: " + carritoDTO.size() + " items para " + numeroDocumento);
             return ResponseEntity.ok(response);
@@ -64,8 +73,10 @@ public class CarritoController {
             Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
+            System.out.println("🛒 POST /carrito/agregar - Usuario: '" + numeroDocumento + "', productoId=" + productoId + ", cantidad=" + cantidad);
             Carrito carrito = carritoService.agregarAlCarrito(numeroDocumento, productoId, cantidad);
-            
+            System.out.println("✅ Producto agregado. itemId=" + (carrito!=null?carrito.getId():null) + ", usuario='" + (carrito!=null && carrito.getUsuario()!=null?carrito.getUsuario().getNumeroDocumento():null) + "'");
+
             return ResponseEntity.ok(new CarritoDTO(carrito));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()

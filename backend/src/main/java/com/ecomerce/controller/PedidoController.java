@@ -153,9 +153,9 @@ public class PedidoController {
             Authentication authentication) {
         try {
             String numeroDocumento = authentication.getName();
-            Pedido pedido = pedidoService.cancelarPedido(pedidoId, numeroDocumento);
-            
-            return ResponseEntity.ok(new PedidoDTO(pedido));
+            PedidoDTO pedidoDTO = pedidoService.cancelarPedido(pedidoId, numeroDocumento);
+
+            return ResponseEntity.ok(pedidoDTO);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: " + e.getMessage()));

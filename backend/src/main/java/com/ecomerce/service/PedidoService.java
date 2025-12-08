@@ -192,8 +192,8 @@ public class PedidoService {
         return new PedidoDTO(saved);
     }
 
-    // Cancelar pedido
-    public Pedido cancelarPedido(Long pedidoId, String numeroDocumento) {
+    // Cancelar pedido - devuelve DTO (construido dentro de la transacción)
+    public com.ecomerce.dto.PedidoDTO cancelarPedido(Long pedidoId, String numeroDocumento) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
@@ -217,6 +217,9 @@ public class PedidoService {
         }
 
         pedido.setEstado(Pedido.EstadoPedido.CANCELADO);
-        return pedidoRepository.save(pedido);
+        Pedido saved = pedidoRepository.save(pedido);
+
+        // Construir DTO mientras la sesión/transaction está activa para evitar LazyInitializationException
+        return new com.ecomerce.dto.PedidoDTO(saved);
     }
 }

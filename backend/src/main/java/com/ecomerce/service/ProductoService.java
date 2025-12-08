@@ -8,6 +8,7 @@ import com.ecomerce.model.Comentario;
 import com.ecomerce.model.Promocion;
 import com.ecomerce.model.Carrito;
 import com.ecomerce.model.DetallePedido;
+import com.ecomerce.model.Pedido;
 import com.ecomerce.model.Compra;
 import com.ecomerce.model.Venta;
 import com.ecomerce.repository.CategoriaRepository;
@@ -138,18 +139,28 @@ public class ProductoService {
 
         // Si no es force: mantener comportamiento conservador y rechazar si existen registros históricos
         List<DetallePedido> detalles = detallePedidoRepository.findByProductoId(id);
+        List<DetallePedido> detallesActivos = detallePedidoRepository.findByProductoIdWherePedidoNotCancel(id, Pedido.EstadoPedido.CANCELADO);
         List<Compra> compras = compraRepository.findByProductoId(id);
         List<Venta> ventas = ventaRepository.findByProductoId(id);
 
         if (!force) {
-            if (detalles != null && !detalles.isEmpty()) {
-                throw new RuntimeException("No se puede eliminar el producto: existen detalles de pedido asociados. Desactívelo en su lugar.");
+            // Si existen detalles asociados a pedidos que NO están cancelados, bloquear la eliminación
+            if (detallesActivos != null && !detallesActivos.isEmpty()) {
+                throw new RuntimeException("No se puede eliminar el producto: existen detalles de pedido asociados a pedidos activos. Desactívelo en su lugar.");
             }
+
+            // Si existen compras/ventas históricas, conservar comportamiento conservador
             if (compras != null && !compras.isEmpty()) {
                 throw new RuntimeException("No se puede eliminar el producto: existen compras asociadas. Desactívelo en su lugar.");
             }
             if (ventas != null && !ventas.isEmpty()) {
                 throw new RuntimeException("No se puede eliminar el producto: existen ventas asociadas. Desactívelo en su lugar.");
+            }
+
+            // En este punto: no hay detalles en pedidos activos, pero puede haber detalles en pedidos CANCELADOS.
+            // Eliminamos esos detalles cancelados para poder borrar el producto sin romper integridad referencial.
+            if (detalles != null && !detalles.isEmpty()) {
+                detallePedidoRepository.deleteAll(detalles);
             }
         } else {
             // Force delete: eliminar dependencias en orden seguro
