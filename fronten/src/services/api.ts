@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://172.16.102.152:8080/api'; // <-- Reemplaza por tu IP local
+const API_URL = 'http://192.168.1.6:8080/api'; // <-- Reemplaza por tu IP local
 // Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
@@ -105,10 +105,13 @@ export const getFullUrl = (path?: string | null) => {
 
 export const userService = {
   getAll: () => api.get('/usuarios'),
-  getById: (id: number) => api.get(`/usuarios/${id}`),
+  getById: (numeroDocumento: string) => api.get(`/usuarios/${numeroDocumento}`),
   create: (data: any) => api.post('/usuarios', data),
-  update: (id: number, data: any) => api.put(`/usuarios/${id}`, data),
-  delete: (id: number) => api.delete(`/usuarios/${id}`),
+  update: (numeroDocumento: string, data: any) => api.put(`/usuarios/${numeroDocumento}`, data),
+  delete: (numeroDocumento: string) => api.delete(`/usuarios/${numeroDocumento}`),
+  // Backend exposes dedicated endpoints for changing estado and rol
+  changeEstado: (numeroDocumento: string, activo: boolean) => api.put(`/usuarios/${numeroDocumento}/estado?activo=${activo}`),
+  changeRol: (numeroDocumento: string, rol: string) => api.put(`/usuarios/${numeroDocumento}/rol?rol=${encodeURIComponent(rol)}`),
 };
 
 export const categoryService = {
@@ -139,7 +142,9 @@ export const productService = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   update: (id: number, data: any) => api.put(`/productos/${id}`, data),
-  delete: (id: number) => api.delete(`/products/${id}`),
+  delete: (id: number) => api.delete(`/productos/${id}`),
+  // Dedicated endpoint to change product state: /productos/{id}/estado?activo=false
+  changeEstado: (id: number, activo: boolean) => api.put(`/productos/${id}/estado?activo=${activo}`),
   // Obtener comentarios de un producto (ajustado a la ruta correcta)
   getComentarios: (id: number) => api.get(`/comentarios/producto/${id}`),
   // Crear comentario/reseña de un producto
