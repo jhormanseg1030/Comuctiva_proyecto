@@ -12,6 +12,7 @@ import CreateProductScreen from './src/screens/CreateProductScreen';
 import CartScreen from './src/screens/CartScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
 import UsuarioMenuScreen from './src/screens/UsuarioScreen';
+import AdminScreen from './src/screens/AdminScreen';
 import MisPedidosScreen from './src/screens/MisPedidosScreen';
 import DetallePedidoScreen from './src/screens/DetallePedidoScreen';
 
@@ -117,6 +118,16 @@ export default function App() {
           component={UsuarioMenuScreen}
           options={{
             title: 'Perfil',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <Stack.Screen
+          name="Admin"
+          component={AdminScreen}
+          options={{
+            title: 'Administración',
             headerStyle: { backgroundColor: '#22c55e' },
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: 'bold' },

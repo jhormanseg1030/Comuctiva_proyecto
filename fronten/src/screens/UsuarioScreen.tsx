@@ -15,6 +15,7 @@ export type UsuarioMenuStackParamList = {
   MisProductos: undefined;
   MisVentas: undefined;
   Home: undefined;
+  Admin: undefined;
 };
 
 interface Props {
@@ -40,6 +41,13 @@ const UsuarioMenuScreen: React.FC<Props> = ({ navigation }) => {
     };
     loadUser();
   }, []);
+
+  const isAdmin = !!(
+    user && (
+      user.rol === 'ADMIN' || user.role === 'ADMIN' || user.roles?.some((r: any) => r === 'ADMIN' || r?.nombre === 'ADMIN' || r?.name === 'ADMIN') ||
+      user.authorities?.some((a: any) => a === 'ROLE_ADMIN' || a === 'ADMIN') || user.isAdmin
+    )
+  );
 
   return (
     <View style={styles.container}>
@@ -86,6 +94,11 @@ const UsuarioMenuScreen: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MisVentas')}>
           <Text style={styles.menuText}>Mis Ventas</Text>
         </TouchableOpacity>
+        {isAdmin && (
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Admin')}>
+            <Text style={[styles.menuText, { fontWeight: '700', color: '#16a34a' }]}>Admin</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]} onPress={() => navigation.replace('Home')}>
           <Text style={[styles.menuText, { color: '#dc2626', fontWeight: 'bold' }]}>Cerrar Sesión</Text>
         </TouchableOpacity>
