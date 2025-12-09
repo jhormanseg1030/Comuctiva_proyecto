@@ -167,7 +167,6 @@ const cartStyles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
     marginBottom: 2,
-    numberOfLines: 1,
   },
   productPrice: {
     fontSize: 18,
@@ -593,7 +592,7 @@ const CartScreen = ({ navigation, route }: any) => {
         />
         
         <View style={cartStyles.productInfo}>
-          <Text style={cartStyles.productName} numberOfLines={1}>{name}</Text>
+          <Text style={cartStyles.productName}>{name}</Text>
           <Text style={cartStyles.productPrice}>${price?.toLocaleString()}</Text>
           {description && (
             <Text style={cartStyles.productDescription} numberOfLines={2}>
