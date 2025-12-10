@@ -55,6 +55,7 @@ const AdminPedidos = () => {
       <table className="table table-striped">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Comprador</th>
             <th>Total</th>
             <th>Estado</th>
@@ -64,7 +65,8 @@ const AdminPedidos = () => {
         <tbody>
           {pedidos.map(p => (
             <tr key={p.id}>
-              <td>{p.usuarioNombre || p.comprador?.numeroDocumento || 'N/A'}</td>
+              <td>{p.id}</td>
+              <td>{p.comprador?.numeroDocumento}</td>
               <td>{p.total}</td>
               <td>{p.estado}</td>
               <td>
