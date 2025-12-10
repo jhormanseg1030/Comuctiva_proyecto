@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { productService, categoryService, subcategoryService, authService } from '../services/api';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const CreateProductScreen = ({ navigation }: any) => {
   const [nombre, setNombre] = useState('');
@@ -18,6 +19,7 @@ const CreateProductScreen = ({ navigation }: any) => {
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<any>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleSubmit = async () => {
     if (!nombre || !precio) return Alert.alert('Error', 'Nombre y precio son obligatorios');
@@ -138,7 +140,32 @@ const CreateProductScreen = ({ navigation }: any) => {
             <TextInput style={styles.input} value={stock} onChangeText={setStock} placeholder="10" keyboardType="numeric" />
 
             <Text style={styles.label}>Fecha de Cosecha</Text>
-            <TextInput style={styles.input} value={fechaCosecha} onChangeText={setFechaCosecha} placeholder="dd/mm/aaaa" />
+            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+              <TextInput
+                style={styles.input}
+                value={fechaCosecha}
+                placeholder="dd/mm/aaaa"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={fechaCosecha ? new Date(fechaCosecha.split('/').reverse().join('-')) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event: any, selectedDate?: Date) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) {
+                    const day = selectedDate.getDate().toString().padStart(2, '0');
+                    const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+                    const year = selectedDate.getFullYear();
+                    setFechaCosecha(`${day}/${month}/${year}`);
+                  }
+                }}
+                maximumDate={new Date()}
+              />
+            )}
 
             <Text style={styles.label}>Categoría</Text>
             <View style={styles.pickerWrap}>
