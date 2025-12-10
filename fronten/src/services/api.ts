@@ -145,10 +145,26 @@ export const productService = {
   delete: (id: number) => api.delete(`/productos/${id}`),
   // Dedicated endpoint to change product state: /productos/{id}/estado?activo=false
   changeEstado: (id: number, activo: boolean) => api.put(`/productos/${id}/estado?activo=${activo}`),
-  // Obtener comentarios de un producto (ajustado a la ruta correcta)
-  getComentarios: (id: number) => api.get(`/comentarios/producto/${id}`),
-  // Crear comentario/reseña de un producto
-  crearComentario: (id: number, data: any) => api.post(`/productos/${id}/comentarios`, data),
+};
+
+// Servicio de comentarios
+export const comentarioService = {
+  // Obtener comentarios de un producto
+  getComentariosByProducto: (productoId: number) => api.get(`/comentarios/producto/${productoId}`),
+  // Crear comentario
+  crearComentario: (data: { productoId: number; comentario: string; calificacion: number }) => 
+    api.post('/comentarios', data),
+  // Obtener mis comentarios
+  getMisComentarios: () => api.get('/comentarios/mis-comentarios'),
+  // Actualizar comentario
+  actualizarComentario: (comentarioId: number, comentario?: string, calificacion?: number) => {
+    const params = new URLSearchParams();
+    if (comentario !== undefined) params.append('comentario', comentario);
+    if (calificacion !== undefined) params.append('calificacion', calificacion.toString());
+    return api.put(`/comentarios/${comentarioId}?${params.toString()}`);
+  },
+  // Eliminar comentario
+  eliminarComentario: (comentarioId: number) => api.delete(`/comentarios/${comentarioId}`),
 };
 
 export const statsService = {
