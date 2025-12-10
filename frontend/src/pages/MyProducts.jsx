@@ -306,13 +306,13 @@ const MyProducts = () => {
         <Row>
           {productos.map(producto => (
             <Col key={producto.id} md={6} lg={4} className="mb-4">
-              <Card>
+              <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Card.Img 
                   variant="top" 
                   src={producto.imagenUrl || 'https://via.placeholder.com/300'}
                   style={{ height: '200px', objectFit: 'cover' }}
                 />
-                <Card.Body>
+                <Card.Body style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <div className="d-flex justify-content-between align-items-start mb-2">
                     <Card.Title className="mb-0">{producto.nombre}</Card.Title>
                     <Badge bg={producto.activo ? 'success' : 'secondary'}>
@@ -323,10 +323,10 @@ const MyProducts = () => {
                     {producto.descripcion?.substring(0, 100)}...
                   </Card.Text>
                   <div className="mb-2">
-                    <strong className="text-primary">${producto.precio?.toFixed(2)}</strong>
+                    <strong className="text-success">${producto.precio?.toFixed(2)}</strong>
                     <span className="text-muted ms-2">Stock: {producto.stock}</span>
                   </div>
-                  <div className="d-grid gap-2">
+                  <div className="d-grid gap-2" style={{ marginTop: 'auto' }}>
                     <Button 
                       type="button"
                       variant={producto.activo ? 'outline-warning' : 'outline-success'}

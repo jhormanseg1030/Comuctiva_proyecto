@@ -96,29 +96,7 @@ const ReviewCard = ({ comentario, currentUser, onUpdate, onDelete }) => {
   const content = comentario.contenido || comentario.comentario || '';
 
   return (
-    <div style={{ padding: '20px 0', position: 'relative' }}>
-      {/* Edit/Delete buttons for owner */}
-      {isOwner && !isEditing && (
-        <div style={{ position: 'absolute', top: '20px', right: '0', display: 'flex', gap: '8px' }}>
-          <Button 
-            variant="outline-primary" 
-            size="sm"
-            onClick={() => setIsEditing(true)}
-            style={{ fontSize: '0.85rem', padding: '4px 12px' }}
-          >
-            ✏️ Editar
-          </Button>
-          <Button 
-            variant="outline-danger" 
-            size="sm"
-            onClick={handleDelete}
-            style={{ fontSize: '0.85rem', padding: '4px 12px' }}
-          >
-            🗑️ Eliminar
-          </Button>
-        </div>
-      )}
-
+    <div style={{ padding: '20px 0' }}>
       <div className="d-flex justify-content-between align-items-start mb-2">
         <div style={{ flex: 1 }}>
           <div className="d-flex align-items-center mb-2">
@@ -222,15 +200,37 @@ const ReviewCard = ({ comentario, currentUser, onUpdate, onDelete }) => {
           </div>
         </div>
       ) : (
-        <p style={{ 
-          margin: 0, 
-          fontSize: '0.95rem', 
-          lineHeight: '1.5',
-          color: '#0f1111',
-          paddingRight: isOwner ? '180px' : '0'
-        }}>
-          {content}
-        </p>
+        <>
+          <p style={{ 
+            margin: 0, 
+            fontSize: '0.95rem', 
+            lineHeight: '1.5',
+            color: '#0f1111',
+            marginBottom: '12px'
+          }}>
+            {content}
+          </p>
+          
+          {/* Edit/Delete buttons - now below the content */}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <Button 
+              variant="outline-primary" 
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              style={{ fontSize: '0.85rem', padding: '4px 12px' }}
+            >
+              ✏️ Editar
+            </Button>
+            <Button 
+              variant="outline-danger" 
+              size="sm"
+              onClick={handleDelete}
+              style={{ fontSize: '0.85rem', padding: '4px 12px' }}
+            >
+              🗑️ Eliminar
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );
