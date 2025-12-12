@@ -33,11 +33,29 @@ const AdminPedidos = () => {
     CONFIRMADO: 'CONFIRMADO'
   };
 
+  const estadoBadge = {
+    PENDIENTE: 'bg-warning text-dark',
+    CONFIRMADO: 'bg-info text-dark',
+    EN_CAMINO: 'bg-primary',
+    ENTREGADO: 'bg-success',
+    CANCELADO: 'bg-danger'
+  };
+
+  const estadoText = {
+    PENDIENTE: 'Pendiente',
+    CONFIRMADO: 'Confirmado',
+    EN_CAMINO: 'En camino',
+    ENTREGADO: 'Entregado',
+    CANCELADO: 'Cancelado'
+  };
+
   const handleCambiarEstado = async (id, estado) => {
     const estadoBackend = estadoMap[estado] || estado;
     if (!window.confirm(`Cambiar estado pedido ${id} a ${estadoBackend}?`)) return;
     try {
-      await actualizarEstadoPedido(id, estadoBackend);
+      const { data } = await actualizarEstadoPedido(id, estadoBackend);
+      // Refresca en caliente la fila actual mientras el fetch revalida todo
+      setPedidos((prev) => prev.map((p) => (p.id === id ? data : p)));
       fetchPedidos();
     } catch (err) {
       console.error('Error actualizando estado pedido:', err);
@@ -66,7 +84,11 @@ const AdminPedidos = () => {
             <tr key={p.id}>
               <td>{p.usuarioNombre || p.comprador?.numeroDocumento || 'N/A'}</td>
               <td>{p.total}</td>
-              <td>{p.estado}</td>
+              <td>
+                <span className={`badge ${estadoBadge[p.estadoPedido] || 'bg-secondary'}`}>
+                  {estadoText[p.estadoPedido] || p.estadoPedido || 'N/A'}
+                </span>
+              </td>
               <td>
                 <button className="btn btn-sm btn-outline-success me-2" onClick={() => handleCambiarEstado(p.id, 'EN_CAMINO')}>Marcar Enviado</button>
                 <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleCambiarEstado(p.id, 'ENTREGADO')}>Marcar Entregado</button>

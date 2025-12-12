@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Table, Button, Form, Alert, Modal } from 'react-bootstrap';
+import { Card, Row, Col, Table, Button, Form, Alert } from 'react-bootstrap';
 import { Download, FileText, TrendingUp, Users, Package, ShoppingCart, DollarSign } from 'lucide-react';
 import api from '../services/api';
 import '../styles/Reports.css';
@@ -49,24 +49,6 @@ const AdminAuditoria = () => {
   const [dateRange, setDateRange] = useState({
     inicio: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     fin: new Date().toISOString().split('T')[0]
-  });
-
-  // Estado para modal de exportación
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [exportConfig, setExportConfig] = useState({
-    modulo: '', // 'usuarios', 'productos', 'pedidos', 'ventas'
-    formato: '', // 'pdf' o 'excel'
-    filtro: 'todo', // 'todo', 'mes', 'anio'
-    mes: new Date().getMonth() + 1,
-    anio: new Date().getFullYear()
-  });
-
-  // Datos raw para filtrado
-  const [rawData, setRawData] = useState({
-    usuarios: [],
-    productos: [],
-    pedidos: [],
-    ventas: []
   });
 
   useEffect(() => {
@@ -278,14 +260,6 @@ const AdminAuditoria = () => {
           }, 0)
       };
 
-      // Guardar datos raw para filtrado posterior
-      setRawData({
-        usuarios,
-        productos,
-        pedidos,
-        ventas: pedidosEntregados
-      });
-
       setReportData({
         usuarios: usuariosStats,
         productos: productosStats,
@@ -361,146 +335,6 @@ const AdminAuditoria = () => {
       console.error('Error al exportar Excel:', error);
       setError('Error al exportar a Excel');
     }
-  };
-
-  // Abrir modal de exportación para un módulo específico
-  const handleOpenExportModal = (modulo, formato) => {
-    setExportConfig({
-      modulo,
-      formato,
-      filtro: 'todo',
-      mes: new Date().getMonth() + 1,
-      anio: new Date().getFullYear()
-    });
-    setShowExportModal(true);
-  };
-
-  // Filtrar datos según configuración
-  const filterDataByDate = (data, dateField) => {
-    const { filtro, mes, anio } = exportConfig;
-    
-    if (filtro === 'todo') return data;
-    
-    return data.filter(item => {
-      const fechaStr = item[dateField] || item.fecha || item.createdAt || item.fechaCreacion;
-      if (!fechaStr) return false;
-      
-      const fecha = new Date(fechaStr);
-      const itemMes = fecha.getMonth() + 1;
-      const itemAnio = fecha.getFullYear();
-      
-      if (filtro === 'mes') {
-        return itemMes === mes && itemAnio === anio;
-      } else if (filtro === 'anio') {
-        return itemAnio === anio;
-      }
-      return true;
-    });
-  };
-
-  // Confirmar y ejecutar exportación
-  const handleConfirmExport = () => {
-    try {
-      const { modulo, formato } = exportConfig;
-      let dataToExport;
-
-      // Filtrar datos según el módulo
-      switch (modulo) {
-        case 'usuarios':
-          const usuariosFiltrados = filterDataByDate(rawData.usuarios, 'fechaRegistro');
-          dataToExport = {
-            items: usuariosFiltrados,
-            stats: {
-              total: usuariosFiltrados.length,
-              activos: usuariosFiltrados.filter(u => u.activo).length,
-              inactivos: usuariosFiltrados.filter(u => !u.activo).length
-            }
-          };
-          break;
-        
-        case 'productos':
-          const productosFiltrados = filterDataByDate(rawData.productos, 'fechaPublicacion');
-          dataToExport = {
-            items: productosFiltrados,
-            stats: {
-              total: productosFiltrados.length,
-              activos: productosFiltrados.filter(p => p.activo).length,
-              sinStock: productosFiltrados.filter(p => (p.stock || 0) <= 0).length
-            }
-          };
-          break;
-        
-        case 'pedidos':
-          const pedidosFiltrados = filterDataByDate(rawData.pedidos, 'fechaPedido');
-          dataToExport = {
-            items: pedidosFiltrados,
-            stats: {
-              total: pedidosFiltrados.length,
-              pendientes: pedidosFiltrados.filter(p => (p.estadoPedido || '').toUpperCase() === 'PENDIENTE').length,
-              entregados: pedidosFiltrados.filter(p => (p.estadoPedido || '').toUpperCase() === 'ENTREGADO').length
-            }
-          };
-          break;
-        
-        case 'ventas':
-          const ventasFiltradas = filterDataByDate(rawData.ventas, 'fechaPedido');
-          const montoTotal = ventasFiltradas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0);
-          dataToExport = {
-            items: ventasFiltradas,
-            stats: {
-              total: ventasFiltradas.length,
-              montoTotal: montoTotal,
-              promedio: ventasFiltradas.length > 0 ? montoTotal / ventasFiltradas.length : 0
-            }
-          };
-          break;
-        
-        default:
-          throw new Error('Módulo no válido');
-      }
-
-      // Exportar según formato
-      if (formato === 'excel') {
-        exportModuloToExcel(modulo, dataToExport);
-      } else if (formato === 'pdf') {
-        exportModuloToPDF(modulo, dataToExport);
-      }
-
-      setShowExportModal(false);
-    } catch (error) {
-      console.error('Error al exportar:', error);
-      setError('Error al exportar: ' + error.message);
-    }
-  };
-
-  // Funciones auxiliares de exportación
-  const exportModuloToExcel = (modulo, data) => {
-    const XLSX = require('xlsx-js-style');
-    const wb = XLSX.utils.book_new();
-    
-    const wsData = [
-      [`Reporte de ${modulo.charAt(0).toUpperCase() + modulo.slice(1)}`],
-      [`Filtro: ${exportConfig.filtro === 'todo' ? 'Todos' : exportConfig.filtro === 'mes' ? `Mes ${exportConfig.mes}/${exportConfig.anio}` : `Año ${exportConfig.anio}`}`],
-      [`Total registros: ${data.items.length}`],
-      [],
-      ...data.items.map(item => Object.values(item))
-    ];
-    
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, modulo);
-    XLSX.writeFile(wb, `${modulo}_${Date.now()}.xlsx`);
-  };
-
-  const exportModuloToPDF = (modulo, data) => {
-    // Usar exportador existente adaptado
-    const dataForPDF = {
-      [`${modulo}Detalle`]: data.items.map(item => ({
-        ...item,
-        concepto: item.nombre || item.id || 'Item',
-        valor: item.total || item.stock || item.activo || '-'
-      }))
-    };
-    exportAdminAuditoriaToPDF(dataForPDF);
   };
   if (loading) {
     return (
@@ -580,20 +414,10 @@ const AdminAuditoria = () => {
         <Col md={6} className="mb-4">
           <Card>
             <Card.Header className="bg-success text-white">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <Users size={20} className="me-2" />
-                  Usuarios
-                </h5>
-                <div className="d-flex gap-1">
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('usuarios', 'pdf')}>
-                    <Download size={14} className="me-1" />PDF
-                  </Button>
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('usuarios', 'excel')}>
-                    <Download size={14} className="me-1" />Excel
-                  </Button>
-                </div>
-              </div>
+              <h5 className="mb-0">
+                <Users size={20} className="me-2" />
+                Usuarios
+              </h5>
             </Card.Header>
             <Card.Body>
               <Table striped bordered hover className="report-table">
@@ -632,20 +456,10 @@ const AdminAuditoria = () => {
         <Col md={6} className="mb-4">
           <Card>
             <Card.Header className="bg-success text-white">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <Package size={20} className="me-2" />
-                  Productos
-                </h5>
-                <div className="d-flex gap-1">
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('productos', 'pdf')}>
-                    <Download size={14} className="me-1" />PDF
-                  </Button>
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('productos', 'excel')}>
-                    <Download size={14} className="me-1" />Excel
-                  </Button>
-                </div>
-              </div>
+              <h5 className="mb-0">
+                <Package size={20} className="me-2" />
+                Productos
+              </h5>
             </Card.Header>
             <Card.Body>
               <Table striped bordered hover className="report-table">
@@ -682,20 +496,10 @@ const AdminAuditoria = () => {
         <Col md={6} className="mb-4">
           <Card>
             <Card.Header className="bg-success text-white">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <ShoppingCart size={20} className="me-2" />
-                  Pedidos
-                </h5>
-                <div className="d-flex gap-1">
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('pedidos', 'pdf')}>
-                    <Download size={14} className="me-1" />PDF
-                  </Button>
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('pedidos', 'excel')}>
-                    <Download size={14} className="me-1" />Excel
-                  </Button>
-                </div>
-              </div>
+              <h5 className="mb-0">
+                <ShoppingCart size={20} className="me-2" />
+                Pedidos
+              </h5>
             </Card.Header>
             <Card.Body>
               <Table striped bordered hover className="report-table">
@@ -730,20 +534,10 @@ const AdminAuditoria = () => {
         <Col md={6} className="mb-4">
           <Card>
             <Card.Header className="bg-success text-white">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <DollarSign size={20} className="me-2" />
-                  Ventas
-                </h5>
-                <div className="d-flex gap-1">
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('ventas', 'pdf')}>
-                    <Download size={14} className="me-1" />PDF
-                  </Button>
-                  <Button size="sm" variant="light" onClick={() => handleOpenExportModal('ventas', 'excel')}>
-                    <Download size={14} className="me-1" />Excel
-                  </Button>
-                </div>
-              </div>
+              <h5 className="mb-0">
+                <DollarSign size={20} className="me-2" />
+                Ventas
+              </h5>
             </Card.Header>
             <Card.Body>
               <Table striped bordered hover className="report-table">
@@ -802,102 +596,6 @@ const AdminAuditoria = () => {
           </Card.Body>
         </Card>
       )}
-
-      {/* Modal de filtros y exportación */}
-      <Modal show={showExportModal} onHide={() => setShowExportModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            Exportar {exportConfig.modulo.charAt(0).toUpperCase() + exportConfig.modulo.slice(1)} - {exportConfig.formato.toUpperCase()}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Filtrar por:</Form.Label>
-              <div>
-                <Form.Check
-                  type="radio"
-                  label="Exportar todos los registros"
-                  name="filtro"
-                  id="filtro-todo"
-                  checked={exportConfig.filtro === 'todo'}
-                  onChange={() => setExportConfig({ ...exportConfig, filtro: 'todo' })}
-                />
-                <Form.Check
-                  type="radio"
-                  label="Solo un mes específico"
-                  name="filtro"
-                  id="filtro-mes"
-                  checked={exportConfig.filtro === 'mes'}
-                  onChange={() => setExportConfig({ ...exportConfig, filtro: 'mes' })}
-                />
-                <Form.Check
-                  type="radio"
-                  label="Solo un año específico"
-                  name="filtro"
-                  id="filtro-anio"
-                  checked={exportConfig.filtro === 'anio'}
-                  onChange={() => setExportConfig({ ...exportConfig, filtro: 'anio' })}
-                />
-              </div>
-            </Form.Group>
-
-            {exportConfig.filtro === 'mes' && (
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Mes</Form.Label>
-                    <Form.Select
-                      value={exportConfig.mes}
-                      onChange={(e) => setExportConfig({ ...exportConfig, mes: Number(e.target.value) })}
-                    >
-                      {[...Array(12)].map((_, idx) => (
-                        <option key={idx + 1} value={idx + 1}>
-                          {new Date(2000, idx).toLocaleString('es', { month: 'long' })}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Año</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={exportConfig.anio}
-                      onChange={(e) => setExportConfig({ ...exportConfig, anio: Number(e.target.value) })}
-                      min="2000"
-                      max="2100"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-            )}
-
-            {exportConfig.filtro === 'anio' && (
-              <Form.Group className="mb-3">
-                <Form.Label>Año</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={exportConfig.anio}
-                  onChange={(e) => setExportConfig({ ...exportConfig, anio: Number(e.target.value) })}
-                  min="2000"
-                  max="2100"
-                />
-              </Form.Group>
-            )}
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowExportModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="success" onClick={handleConfirmExport}>
-            <Download size={16} className="me-2" />
-            Confirmar Exportación
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </div>
   );
 };
