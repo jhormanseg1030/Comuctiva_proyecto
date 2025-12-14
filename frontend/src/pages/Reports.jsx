@@ -33,57 +33,72 @@ const Reports = () => {
       switch (reportType) {
         case 'productos':
           const productosRes = await getProductosByUsuario(user.numeroDocumento);
-          data = productosRes.data.map(p => ({
-            nombre: p.nombre,
-            valor: p.precio,
-            cantidad: p.stock,
-            categoria: p.categoriaNombre || 'Sin categoría',
-            descripcion: p.descripcion
-          }));
+          // Filtrar solo productos activos
+          data = productosRes.data
+            .filter(p => p.activo !== false)
+            .map(p => ({
+              nombre: p.nombre,
+              valor: p.precio,
+              cantidad: p.stock,
+              categoria: p.categoriaNombre || 'Sin categoría',
+              descripcion: p.descripcion
+            }));
           break;
           
         case 'pedidos':
           const pedidosRes = await getPedidos();
-          data = pedidosRes.data.map(p => ({
-            fecha: new Date(p.fechaPedido).toLocaleDateString('es-ES'),
-            valor: p.total,
-            estado: p.estado,
-            direccion: p.direccionEnvio,
-            metodoPago: p.metodoPago
-          }));
+          // Filtrar pedidos cancelados
+          data = pedidosRes.data
+            .filter(p => (p.estadoPedido || p.estado) !== 'CANCELADO')
+            .map(p => ({
+              fecha: new Date(p.fechaPedido).toLocaleDateString('es-ES'),
+              valor: p.total,
+              estado: p.estadoPedido || p.estado || 'N/A',
+              direccion: p.direccionEntrega || p.direccionEnvio || 'N/A',
+              metodoPago: p.metodoPago || 'N/A'
+            }));
           break;
           
         case 'ventas':
           const ventasRes = await getVentas();
-          data = ventasRes.data.map(v => ({
-            producto: v.producto?.nombre || v.productoNombre || 'N/A',
-            cantidad: v.cantidad,
-            valor: v.precioUnitario,
-            total: v.subtotal || (v.precioUnitario * v.cantidad),
-            // Fecha y estado vienen en el objeto 'pedido' del DTO
-            fecha: v.pedido?.fechaPedido ? new Date(v.pedido.fechaPedido).toLocaleDateString('es-ES') : 'N/A',
-            estado: v.pedido?.estado || 'N/A'
-          }));
+          // Filtrar ventas de pedidos cancelados
+          data = ventasRes.data
+            .filter(v => {
+              const estado = v.pedido?.estadoPedido || v.pedido?.estado;
+              return estado !== 'CANCELADO';
+            })
+            .map(v => ({
+              producto: v.producto?.nombre || v.productoNombre || 'N/A',
+              cantidad: v.cantidad,
+              valor: v.precioUnitario,
+              total: v.subtotal || (v.precioUnitario * v.cantidad),
+              // Fecha y estado vienen en el objeto 'pedido' del DTO
+              fecha: v.pedido?.fechaPedido ? new Date(v.pedido.fechaPedido).toLocaleDateString('es-ES') : 'N/A',
+              estado: v.pedido?.estadoPedido || v.pedido?.estado || 'N/A'
+            }));
           break;
           
         case 'compras':
           const comprasRes = await getPedidos();
           const comprasDataList = [];
-          comprasRes.data.forEach(pedido => {
-            if (pedido.detalles && Array.isArray(pedido.detalles)) {
-              pedido.detalles.forEach(detalle => {
-                comprasDataList.push({
-                  producto: detalle.productoNombre || detalle.producto?.nombre || 'N/A',
-                  cantidad: detalle.cantidad,
-                  valor: detalle.precioUnitario,
-                  total: detalle.subtotal || (detalle.precioUnitario * detalle.cantidad),
-                  vendedor: detalle.vendedorNombre || 'N/A',
-                  fecha: pedido.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString('es-ES') : 'N/A',
-                  estado: pedido.estado
+          // Filtrar pedidos cancelados
+          comprasRes.data
+            .filter(pedido => (pedido.estadoPedido || pedido.estado) !== 'CANCELADO')
+            .forEach(pedido => {
+              if (pedido.detalles && Array.isArray(pedido.detalles)) {
+                pedido.detalles.forEach(detalle => {
+                  comprasDataList.push({
+                    producto: detalle.productoNombre || detalle.producto?.nombre || 'N/A',
+                    cantidad: detalle.cantidad,
+                    valor: detalle.precioUnitario,
+                    total: detalle.subtotal || (detalle.precioUnitario * detalle.cantidad),
+                    vendedor: detalle.vendedorNombre || 'N/A',
+                    fecha: pedido.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString('es-ES') : 'N/A',
+                    estado: pedido.estadoPedido || pedido.estado || 'N/A'
+                  });
                 });
-              });
-            }
-          });
+              }
+            });
           data = comprasDataList;
           break;
           
@@ -95,8 +110,20 @@ const Reports = () => {
             getVentas()
           ]);
           
+          // Filtrar productos activos
+          const productosActivos = productos.data.filter(p => p.activo !== false);
+          
+          // Filtrar pedidos no cancelados
+          const pedidosActivos = pedidos.data.filter(p => (p.estadoPedido || p.estado) !== 'CANCELADO');
+          
+          // Filtrar ventas de pedidos no cancelados
+          const ventasActivas = ventas.data.filter(v => {
+            const estado = v.pedido?.estadoPedido || v.pedido?.estado;
+            return estado !== 'CANCELADO';
+          });
+          
           // Mapear productos
-          const productosData = productos.data.map(p => ({
+          const productosData = productosActivos.map(p => ({
             nombre: p.nombre,
             valor: p.precio,
             cantidad: p.stock,
@@ -105,27 +132,27 @@ const Reports = () => {
           }));
           
           // Mapear pedidos
-          const pedidosData = pedidos.data.map(p => ({
+          const pedidosData = pedidosActivos.map(p => ({
             fecha: new Date(p.fechaPedido).toLocaleDateString('es-ES'),
             valor: p.total,
-            estado: p.estado,
-            direccion: p.direccionEnvio,
-            metodoPago: p.metodoPago
+            estado: p.estadoPedido || p.estado || 'N/A',
+            direccion: p.direccionEntrega || p.direccionEnvio || 'N/A',
+            metodoPago: p.metodoPago || 'N/A'
           }));
           
           // Mapear ventas
-          const ventasData = ventas.data.map(v => ({
+          const ventasData = ventasActivas.map(v => ({
             producto: v.producto?.nombre || v.productoNombre || 'N/A',
             cantidad: v.cantidad,
             valor: v.precioUnitario,
             total: v.subtotal || (v.precioUnitario * v.cantidad),
             fecha: v.pedido?.fechaPedido ? new Date(v.pedido.fechaPedido).toLocaleDateString('es-ES') : 'N/A',
-            estado: v.pedido?.estado || 'N/A'
+            estado: v.pedido?.estadoPedido || v.pedido?.estado || 'N/A'
           }));
           
           // Mapear compras
           const comprasData = [];
-          pedidos.data.forEach(pedido => {
+          pedidosActivos.forEach(pedido => {
             if (pedido.detalles && Array.isArray(pedido.detalles)) {
               pedido.detalles.forEach(detalle => {
                 comprasData.push({
@@ -135,7 +162,7 @@ const Reports = () => {
                   total: detalle.subtotal || (detalle.precioUnitario * detalle.cantidad),
                   vendedor: detalle.vendedorNombre || 'N/A',
                   fecha: pedido.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString('es-ES') : 'N/A',
-                  estado: pedido.estado
+                  estado: pedido.estadoPedido || pedido.estado || 'N/A'
                 });
               });
             }
@@ -143,11 +170,11 @@ const Reports = () => {
           
           data = {
             resumen: {
-              productos: productos.data.length,
-              pedidos: pedidos.data.length,
-              ventas: ventas.data.length,
-              totalVentas: ventas.data.reduce((sum, v) => sum + (v.subtotal || (v.precioUnitario * v.cantidad)), 0),
-              totalCompras: pedidos.data.reduce((sum, p) => sum + (p.total || 0), 0)
+              productos: productosActivos.length,
+              pedidos: pedidosActivos.length,
+              ventas: ventasActivas.length,
+              totalVentas: ventasActivas.reduce((sum, v) => sum + (v.subtotal || (v.precioUnitario * v.cantidad)), 0),
+              totalCompras: pedidosActivos.reduce((sum, p) => sum + (p.total || 0), 0)
             },
             productosDetalle: productosData,
             pedidosDetalle: pedidosData,
