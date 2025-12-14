@@ -154,8 +154,6 @@ const MyOrders = () => {
           <Card.Header>
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <strong>Pedido #{pedido.id}</strong>
-                <br />
                 <small className="text-muted">
                   {formatDate(pedido.fechaPedido)}
                 </small>
@@ -210,7 +208,7 @@ const MyOrders = () => {
 
             <div className="text-end">
               <h5>
-                Total: <span className="text-primary">${pedido.total?.toFixed(2)}</span>
+                Total: <span style={{color: '#1B7340'}}>${pedido.total?.toFixed(2)}</span>
               </h5>
             </div>
 
@@ -251,7 +249,7 @@ const MyOrders = () => {
       {/* Modal de detalles del pedido */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Detalles del Pedido #{selectedPedido?.id}</Modal.Title>
+          <Modal.Title>Detalles del Pedido</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedPedido ? (
@@ -302,7 +300,7 @@ const MyOrders = () => {
 
               <div className="text-end">
                 <h5>
-                  Total: <span className="text-primary">${selectedPedido.total?.toFixed(2)}</span>
+                  Total: <span style={{color: '#1B7340'}}>${selectedPedido.total?.toFixed(2)}</span>
                 </h5>
               </div>
             </>
