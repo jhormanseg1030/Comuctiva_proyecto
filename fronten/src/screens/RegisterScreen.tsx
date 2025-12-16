@@ -70,11 +70,15 @@ export default function RegisterScreen({ navigation }: any) {
       const result = await authService.register(payload);
       setLoading(false);
       console.log('Respuesta registro:', result);
-      if (result.success) {
+      // El backend retorna {message: "Usuario registrado exitosamente"} en caso de éxito
+      if (result.message && result.message.includes('exitoso')) {
+        alert('¡Registro exitoso! Por favor inicia sesión.');
+        navigation.replace('Login');
+      } else if (result.success) {
         alert('¡Registro exitoso! Por favor inicia sesión.');
         navigation.replace('Login');
       } else {
-        setError(result.error || 'Error en el registro');
+        setError(result.error || result.message || 'Error en el registro');
       }
     } catch (err: any) {
       setLoading(false);

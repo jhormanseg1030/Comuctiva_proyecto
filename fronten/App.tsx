@@ -15,6 +15,7 @@ import UsuarioMenuScreen from './src/screens/UsuarioScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import MisPedidosScreen from './src/screens/MisPedidosScreen';
 import DetallePedidoScreen from './src/screens/DetallePedidoScreen';
+import MisVentasScreen from './src/screens/MisVentasScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -138,6 +139,16 @@ export default function App() {
           component={MisPedidosScreen}
           options={{
             headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="MisVentas"
+          component={MisVentasScreen}
+          options={{
+            title: 'Mis Ventas',
+            headerStyle: { backgroundColor: '#22c55e' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
           }}
         />
         <Stack.Screen
