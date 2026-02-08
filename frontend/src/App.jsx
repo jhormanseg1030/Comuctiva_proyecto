@@ -54,7 +54,7 @@ const ProtectedRoute = ({ children }) => {
 
 function AppContent() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="d-flex flex-column min-vh-100">
         <NavigationBar />
         <main className="flex-grow-1">
