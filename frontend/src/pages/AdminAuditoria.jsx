@@ -474,8 +474,8 @@ const AdminAuditoria = () => {
   };
 
   // Funciones auxiliares de exportación
-  const exportModuloToExcel = (modulo, data) => {
-    const XLSX = require('xlsx-js-style');
+  const exportModuloToExcel = async (modulo, data) => {
+    const XLSX = await import('xlsx-js-style');
     const wb = XLSX.utils.book_new();
     
     const wsData = [
