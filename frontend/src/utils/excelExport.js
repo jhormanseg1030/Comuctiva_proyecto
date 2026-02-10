@@ -2,7 +2,7 @@
  * excelExport.js
  * Módulo para exportar reportes a Excel con formato COMUCTIVA
  */
-import * as XLSX from 'xlsx-js-style';
+import * as XLSX from 'xlsx';
 
 /**
  * Crea el encabezado estándar de COMUCTIVA para Excel con formato
