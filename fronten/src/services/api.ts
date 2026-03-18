@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia la IP por la de tu PC si usas dispositivo físico
-const API_URL = 'http://192.168.1.5:8080/api'; // <-- Reemplaza por tu IP local
+const API_URL = 'http://192.168.1.3:8080/api'; // <-- Reemplaza por tu IP local
 // Para emulador Android puedes usar: 'http://10.0.2.2:8080/api'
 
 const api = axios.create({
@@ -200,6 +200,7 @@ export const cartService = {
 // Servicios de pedidos
 export const pedidosService = {
   getMisPedidos: () => api.get('/pedidos/mis-pedidos'),
+  getMisVentas: () => api.get('/pedidos/mis-ventas'),
   getPedido: (id: number) => api.get(`/pedidos/${id}`),
   crearPedido: (pedidoData: any) => 
     api.post(`/pedidos/crear?direccionEnvio=${encodeURIComponent(pedidoData.direccionEntrega)}&metodoPago=${pedidoData.metodoPago}&costoFlete=${pedidoData.costoFlete || 0}`),
