@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { pedidosService } from '../services/api';
 
 type Props = {
   navigation: StackNavigationProp<any>;
@@ -21,13 +20,7 @@ const MisVentasScreen: React.FC<Props> = ({ navigation }) => {
   const loadMisVentas = async () => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('token');
-      const response = await axios.get('http://192.168.1.5:8080/api/pedidos/mis-ventas', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
+      const response = await pedidosService.getMisVentas();
       setVentas(response.data || []);
       
       // Calcular total de ventas
